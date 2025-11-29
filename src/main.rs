@@ -1,9 +1,12 @@
+use std::sync::Arc;
+
 use axum::{
-    Json, Router, extract::Multipart, http::StatusCode, routing::post
+    Json, Router, body::Bytes, extract::Multipart, http::StatusCode, routing::post
 };
 use axum_macros::debug_handler;
 use bpm_ocr::{BloodPressureReadingExtractor, debug::UnsafeTempFolderDebugger};
 use serde::Serialize;
+use tokio::task;
 
 #[derive(Serialize)]
 pub enum BloodPressureReadingResponse {
@@ -25,16 +28,23 @@ async fn run_ocr(mut multipart: Multipart) -> Result<Json<BloodPressureReadingRe
             let name = field.name()
                 .filter(|n| *n == "image")
                 .ok_or(StatusCode::BAD_REQUEST);
+            
+            let file_contents: Bytes = field.bytes().await.map_err(|_| StatusCode::BAD_REQUEST)?;
+            let file_contents_vec = file_contents.to_vec();
 
-            let file_contents = field.bytes().await.map_err(|_| StatusCode::BAD_REQUEST)?;
+            let x = task::spawn_blocking( move || {
+                let debugger: UnsafeTempFolderDebugger = UnsafeTempFolderDebugger::using_timestamp_folder_name(true);
+                let blood_pressure_extractor = BloodPressureReadingExtractor::new(debugger);
 
-            let debugger = UnsafeTempFolderDebugger::using_timestamp_folder_name(true);
-            let blood_pressure_extractor = BloodPressureReadingExtractor::new(debugger);
+                blood_pressure_extractor.get_reading_from_buffer(file_contents_vec)
+                    .map(|reading| Json(BloodPressureReadingResponse::Reading { systolic: reading.systolic, diastolic: reading.diastolic, pulse: reading.pulse })
+                    )
+                    .or_else(|err| Ok(Json(BloodPressureReadingResponse::ReadingError { description: "erroraroonie".to_string() })))
+                });
 
-            blood_pressure_extractor.get_reading_from_buffer(file_contents.to_vec())
-                .map(|reading| Json(BloodPressureReadingResponse::Reading { systolic: reading.systolic, diastolic: reading.diastolic, pulse: reading.pulse })
-                )
-                .or_else(|err| Ok(Json(BloodPressureReadingResponse::ReadingError { description: "erroraroonie".to_string() })))
+            let result= x.await.map_err(|_| StatusCode::INTERNAL_SERVER_ERROR).flatten();
+
+            result
         },
         None => {
             Err(StatusCode::BAD_REQUEST)
