@@ -25,14 +25,14 @@ async fn run_ocr(mut multipart: Multipart) -> Result<Json<BloodPressureReadingRe
 
     match field  {
         Some(field) => {
-            let name = field.name()
+            field.name()
                 .filter(|n| *n == "image")
-                .ok_or(StatusCode::BAD_REQUEST);
+                .ok_or(StatusCode::BAD_REQUEST)?;
             
             let file_contents: Bytes = field.bytes().await.map_err(|_| StatusCode::BAD_REQUEST)?;
             let file_contents_vec = file_contents.to_vec();
 
-            let x = task::spawn_blocking( move || {
+            task::spawn_blocking( move || {
                 let debugger: UnsafeTempFolderDebugger = UnsafeTempFolderDebugger::using_timestamp_folder_name(true);
                 let blood_pressure_extractor = BloodPressureReadingExtractor::new(debugger);
 
@@ -40,11 +40,7 @@ async fn run_ocr(mut multipart: Multipart) -> Result<Json<BloodPressureReadingRe
                     .map(|reading| Json(BloodPressureReadingResponse::Reading { systolic: reading.systolic, diastolic: reading.diastolic, pulse: reading.pulse })
                     )
                     .or_else(|err| Ok(Json(BloodPressureReadingResponse::ReadingError { description: "erroraroonie".to_string() })))
-                });
-
-            let result= x.await.map_err(|_| StatusCode::INTERNAL_SERVER_ERROR).flatten();
-
-            result
+                }).await.map_err(|_| StatusCode::INTERNAL_SERVER_ERROR).flatten()
         },
         None => {
             Err(StatusCode::BAD_REQUEST)
