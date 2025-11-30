@@ -7,6 +7,7 @@ use axum_macros::debug_handler;
 use bpm_ocr::{BloodPressureReadingExtractor, debug::UnsafeTempFolderDebugger};
 use serde::Serialize;
 use tokio::task;
+use tower_http::services::ServeDir;
 
 #[derive(Serialize)]
 pub enum BloodPressureReadingResponse {
@@ -21,7 +22,14 @@ pub enum BloodPressureReadingResponse {
 }
 
 async fn run_ocr(mut multipart: Multipart) -> Result<Json<BloodPressureReadingResponse>, StatusCode> {
-    let field = multipart.next_field().await.map_err(|_| StatusCode::BAD_REQUEST)?;
+    println!("testaroonieeee");
+    let field = multipart.next_field().await.map_err(|ee|
+         {
+            println!("{:?}", ee);
+            StatusCode::BAD_REQUEST
+        })?;
+
+    println!("{:?}", field);
 
     match field  {
         Some(field) => {
@@ -51,11 +59,16 @@ async fn run_ocr(mut multipart: Multipart) -> Result<Json<BloodPressureReadingRe
 }
 
 #[tokio::main]
-async fn main() {    
-    let app = Router::new().route("/run-ocr", post(run_ocr));
+async fn main() {
+    let serve_dir = ServeDir::new("client");
+
+    let app = Router::new()
+        .route("/run-ocr", post(run_ocr))
+        .fallback_service(serve_dir);
 
     let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
     println!("server listen on port : {}", listener.local_addr().unwrap());
+    
     axum::serve(listener, app).await.unwrap();
 
 }
