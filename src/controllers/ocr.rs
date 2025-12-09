@@ -29,6 +29,8 @@ fn is_unlikely_reading(reading: &BloodPressureReading) -> bool {
     // They ded (or ded-ish)
     if reading.systolic < 50 { return true; }
     else if reading.diastolic < 40 {return true; }
+
+    // Or mebbe they just don't have a pulse - like Dick Cheney
     else if reading.pulse < 40 { return true; }
     else { return false; }
 }
