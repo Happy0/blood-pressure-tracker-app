@@ -1,15 +1,15 @@
 use std::sync::Arc;
 
 use axum::{
-    Json, Router, body::Bytes, extract::Multipart, http::StatusCode, routing::post
+    Json, Router, body::Bytes, extract::{DefaultBodyLimit, Multipart}, http::StatusCode, routing::post
 };
-use axum_macros::debug_handler;
-use bpm_ocr::{BloodPressureReadingExtractor, debug::UnsafeTempFolderDebugger};
+use bpm_ocr::{get_reading_from_buffer, models::DebuggerTrace};
 use serde::Serialize;
 use tokio::task;
 use tower_http::services::ServeDir;
 
 #[derive(Serialize)]
+#[serde(tag = "type")]
 pub enum BloodPressureReadingResponse {
     Reading {
         systolic: i32,
@@ -22,14 +22,11 @@ pub enum BloodPressureReadingResponse {
 }
 
 async fn run_ocr(mut multipart: Multipart) -> Result<Json<BloodPressureReadingResponse>, StatusCode> {
-    println!("testaroonieeee");
     let field = multipart.next_field().await.map_err(|ee|
          {
             println!("{:?}", ee);
             StatusCode::BAD_REQUEST
         })?;
-
-    println!("{:?}", field);
 
     match field  {
         Some(field) => {
@@ -41,10 +38,12 @@ async fn run_ocr(mut multipart: Multipart) -> Result<Json<BloodPressureReadingRe
             let file_contents_vec = file_contents.to_vec();
 
             task::spawn_blocking( move || {
-                let debugger: UnsafeTempFolderDebugger = UnsafeTempFolderDebugger::using_timestamp_folder_name(true);
-                let blood_pressure_extractor = BloodPressureReadingExtractor::new(debugger);
+                let debugger_trace = DebuggerTrace::temp_folder_session_uuid();
+                let ocr_result = get_reading_from_buffer(file_contents_vec, debugger_trace);
 
-                blood_pressure_extractor.get_reading_from_buffer(file_contents_vec)
+                println!("{:?}", ocr_result);
+                
+                ocr_result 
                     .map(|reading| Json(BloodPressureReadingResponse::Reading { systolic: reading.systolic, diastolic: reading.diastolic, pulse: reading.pulse })
                     )
                     .or_else(|err| Ok(Json(BloodPressureReadingResponse::ReadingError { description: "erroraroonie".to_string() })))
@@ -65,8 +64,8 @@ async fn main() {
     let app = Router::new()
         .route("/run-ocr", post(run_ocr))
         .fallback_service(serve_dir);
-
-    let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
+    
+    let listener = tokio::net::TcpListener::bind("0.0.0.0:8080").await.unwrap();
     println!("server listen on port : {}", listener.local_addr().unwrap());
     
     axum::serve(listener, app).await.unwrap();
