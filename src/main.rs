@@ -1,61 +1,15 @@
-use std::sync::Arc;
 
 use axum::{
-    Json, Router, body::Bytes, extract::{DefaultBodyLimit, Multipart}, http::StatusCode, routing::post
+    Router, routing::post
 };
 use bpm_ocr::{get_reading_from_buffer, models::DebuggerTrace};
-use serde::Serialize;
-use tokio::task;
 use tower_http::services::ServeDir;
 
-#[derive(Serialize)]
-#[serde(tag = "type")]
-pub enum BloodPressureReadingResponse {
-    Reading {
-        systolic: i32,
-        diastolic: i32,
-        pulse: i32
-    }, 
-    ReadingError {
-        description: String
-    }
-}
+mod controllers;
 
-async fn run_ocr(mut multipart: Multipart) -> Result<Json<BloodPressureReadingResponse>, StatusCode> {
-    let field = multipart.next_field().await.map_err(|ee|
-         {
-            println!("{:?}", ee);
-            StatusCode::BAD_REQUEST
-        })?;
+use controllers::ocr;
 
-    match field  {
-        Some(field) => {
-            field.name()
-                .filter(|n| *n == "image")
-                .ok_or(StatusCode::BAD_REQUEST)?;
-            
-            let file_contents: Bytes = field.bytes().await.map_err(|_| StatusCode::BAD_REQUEST)?;
-            let file_contents_vec = file_contents.to_vec();
-
-            task::spawn_blocking( move || {
-                let debugger_trace = DebuggerTrace::temp_folder_session_uuid();
-                let ocr_result = get_reading_from_buffer(file_contents_vec, debugger_trace);
-
-                println!("{:?}", ocr_result);
-                
-                ocr_result 
-                    .map(|reading| Json(BloodPressureReadingResponse::Reading { systolic: reading.systolic, diastolic: reading.diastolic, pulse: reading.pulse })
-                    )
-                    .or_else(|err| Ok(Json(BloodPressureReadingResponse::ReadingError { description: "erroraroonie".to_string() })))
-                }).await.map_err(|_| StatusCode::INTERNAL_SERVER_ERROR).flatten()
-        },
-        None => {
-            Err(StatusCode::BAD_REQUEST)
-        }
-    }
-
-
-}
+use crate::controllers::ocr::run_ocr;
 
 #[tokio::main]
 async fn main() {

@@ -53,10 +53,14 @@
                             body: formData
                         })
                         .then(resp => {
-                            const result = resp.json().then(respText => {
+                            const result = resp.json().then(respJson => {
                                 const elem = document.getElementById("p")
-                                var text = document.createTextNode(JSON.stringify(respText));
+                                var text = document.createTextNode(JSON.stringify(respJson));
                                 elem.appendChild(text)
+
+                                if (respJson.type === "Reading") {
+                                    clearInterval(intervalId)
+                                }
                             })
                         })
                     })
