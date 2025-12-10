@@ -61,7 +61,7 @@ pub async fn run_ocr(mut multipart: Multipart) -> Result<Json<BloodPressureReadi
             let file_contents_vec = file_contents.to_vec();
 
             task::spawn_blocking( move || {
-                let debugger_trace = DebuggerTrace::temp_folder_session_uuid();
+                let debugger_trace = DebuggerTrace::no_debug_session();
                 let ocr_result = get_reading_from_buffer(file_contents_vec, debugger_trace);
 
                 println!("{:?}", ocr_result);
