@@ -1,4 +1,10 @@
-<script setup lang="ts"></script>
+<script setup lang="ts">
+
+import BloodPressureReadingForm from './components/BloodPressureReadingForm.vue'
+import './assets/main.css'
+import 'primeicons/primeicons.css'
+
+</script>
 
 <template>
   <h1>You did it!</h1>
@@ -6,7 +12,10 @@
     Visit <a href="https://vuejs.org/" target="_blank" rel="noopener">vuejs.org</a> to read the
     documentation
   </p>
-  <Button>Testaroonie</Button>
+  <BloodPressureReadingForm/>
+  
 </template>
 
-<style scoped></style>
+<style scoped>
+
+</style>
