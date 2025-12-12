@@ -23,13 +23,13 @@ function onSubmit(param) {
             <InputText name="pulse" type="text" placeholder="" fluid></InputText>
         </div>
             <Button type="submit" severity="secondary" label="Submit" />
-        <div class="pt-2 border-t mt-2">
+        <div class="pt-2 border-t mt-2 mx-auto">
         <Button 
         label="Detect From Camera"
         icon="pi pi-camera"
         iconPos="left"
         outlined
-        class="animate-pulse-slow"
+        class="animate-pulse-slow flex"
         />
         </div>
 
