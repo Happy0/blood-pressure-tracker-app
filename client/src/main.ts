@@ -6,7 +6,7 @@ import Aura from '@primeuix/themes/aura';
 import Button from "primevue/button"
 import { Form } from '@primevue/forms';
 import {InputText} from 'primevue'
-
+import DatePicker from 'primevue/datepicker';
 
 const app = createApp(App)
 
@@ -21,5 +21,6 @@ app.use(PrimeVue, {
 app.component('Button', Button)
 app.component('InputText', InputText)
 app.component('Form', Form)
+app.component('DatePicker', DatePicker)
 
 app.mount('#app')
