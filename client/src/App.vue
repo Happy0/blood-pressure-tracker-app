@@ -3,8 +3,9 @@
 import BloodPressureReadingForm from './components/BloodPressureReadingForm.vue'
 import './assets/main.css'
 import 'primeicons/primeicons.css'
+import { useRoute } from 'vue-router';
 
-const now = new Date() 
+const route = useRoute()
 
 </script>
 
@@ -14,7 +15,12 @@ const now = new Date()
     Visit <a href="https://vuejs.org/" target="_blank" rel="noopener">vuejs.org</a> to read the
     documentation
   </p>
-  <BloodPressureReadingForm :systolic=111 :diastolic=123 :pulse=88 />
+  <div>
+      <RouterLink v-if="route.path === '/'" to="/reading" > Take Reading </RouterLink>
+    <main>
+      <RouterView></RouterView>
+    </main>
+  </div>
   
 </template>
 
