@@ -1,4 +1,4 @@
-<script setup>
+<script lang="ts" setup>
 
     const now = new Date()
 
@@ -16,7 +16,7 @@
         dateTime: now
     }
 
-    function onSubmit(param) {
+    function onSubmit(param: any) {
         console.log(param)
     }
 
