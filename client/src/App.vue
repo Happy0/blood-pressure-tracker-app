@@ -13,10 +13,6 @@ const route = useRoute()
   <div v-if="route.path === '/'" to="/reading" class="flex flex-col items-center justify-center min-h-screen bg-gray-50 p-6">
     <div class="bg-white shadow-lg rounded-2xl p-8 w-full max-w-sm flex flex-col gap-4">
 
-      <h1 class="text-2xl font-semibold text-center mb-2">
-        Main Menu
-      </h1>
-
       <RouterLink
         to="/reading"
         class="text-center py-3 rounded-xl border bg-blue-500 text-white font-medium hover:bg-blue-600 transition"
