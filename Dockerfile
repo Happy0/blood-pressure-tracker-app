@@ -25,7 +25,7 @@ RUN ls -lisatr /usr/local/lib
 ENV LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/usr/lib:/lib:/lib/x86_64-linux-gnu
 
 COPY --from=builder /app/target/release/blood-pressure-tracker-app /usr/local/bin
-COPY --from=builder /app/client /usr/local/bin/client
+COPY --from=builder /app/client/dist /usr/local/bin/client
 
 RUN echo "test"
 WORKDIR /usr/local/bin

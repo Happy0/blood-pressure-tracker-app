@@ -46,11 +46,12 @@
             <Button type="submit" severity="secondary" label="Submit" fluid />
         <div class="pt-2 border-t mt-2 mx-auto">
         <Button 
-        label="Detect From Camera"
-        icon="pi pi-camera"
-        iconPos="left"
-        outlined
-        class="animate-pulse-slow flex"
+            label="Detect From Camera"
+            icon="pi pi-camera"
+            iconPos="left"
+            outlined
+            class="animate-pulse-slow flex"
+            @click="$router.push('/reading-from-camera')"
         />
         </div>
 
