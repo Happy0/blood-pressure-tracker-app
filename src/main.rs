@@ -1,4 +1,6 @@
 
+use std::env;
+
 use axum::{
     Router, routing::post
 };
@@ -13,7 +15,8 @@ use crate::controllers::ocr::run_ocr;
 
 #[tokio::main]
 async fn main() {
-    let serve_dir = ServeDir::new("client");
+    let target_assets_directory = env::var("CLIENT_ASSETS_PATH").unwrap_or("client".to_string());
+    let serve_dir = ServeDir::new(target_assets_directory);
 
     let app = Router::new()
         .route("/run-ocr", post(run_ocr))
