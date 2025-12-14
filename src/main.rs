@@ -4,7 +4,7 @@ use std::env;
 use axum::{
     Router, routing::post
 };
-use tower_http::services::ServeDir;
+use tower_http::services::{ServeDir, ServeFile};
 
 mod controllers;
 use crate::controllers::ocr::run_ocr;
@@ -12,7 +12,8 @@ use crate::controllers::ocr::run_ocr;
 #[tokio::main]
 async fn main() {
     let target_assets_directory = env::var("CLIENT_ASSETS_PATH").unwrap_or("client".to_string());
-    let serve_dir = ServeDir::new(target_assets_directory);
+    let serve_dir = ServeDir::new(&target_assets_directory)
+        .fallback(ServeFile::new(format!("{}/index.html", target_assets_directory)));
 
     let app = Router::new()
         .route("/run-ocr", post(run_ocr))
