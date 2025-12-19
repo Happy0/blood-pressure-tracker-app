@@ -7,7 +7,10 @@ edition = "2024"
 axum = { version = "0.8.7", features = ["multipart"] }
 axum-macros = "0.5.0"
 bpm-ocr = "1.0.0"
+openidconnect = "4.0.1"
+reqwest = "0.12.26"
 serde = { version = "1.0.228", features = ["derive"] }
 tokio = {version = "1.48.0", features = ["rt-multi-thread"]}
 tower = "0.5.2"
 tower-http = { version = "0.6.7", features = ["fs"] }
+tower-sessions = "0.14.0"

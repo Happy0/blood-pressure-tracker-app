@@ -1,5 +1,3 @@
-use std::fs::read;
-
 use axum::{Json, body::Bytes, extract::Multipart, http::StatusCode};
 use bpm_ocr::{get_reading_from_buffer, models::{BloodPressureReading, DebuggerTrace, ProcessingError}};
 use serde::Serialize;
