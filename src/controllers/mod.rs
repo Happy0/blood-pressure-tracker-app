@@ -1,2 +1,2 @@
-pub(crate) mod ocr;
 pub(crate) mod login;
+pub(crate) mod ocr;
