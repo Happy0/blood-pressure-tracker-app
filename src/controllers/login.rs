@@ -53,18 +53,20 @@ pub async fn login_handler(
         )
         // This example is requesting access to the the user's profile including email.
         .add_scope(Scope::new("email".to_string()))
-        .add_scope(Scope::new("profile".to_string()))
         .set_pkce_challenge(pkce_challenge)
         .url();
 
     let csrf_insert = session.insert(OIDC_CSRF_TOKEN_KEY, csrf_state);
     let nonce_insert = session.insert(OIDC_NONCE_KEY, nonce);
     let pkce_verifier_insert = session.insert(OIDC_PKCE_VERIFIER_KEY, pkce_verifier);
+    let save = session.save();
 
-    let result = join!(csrf_insert, nonce_insert, pkce_verifier_insert);
+    let result = join!(csrf_insert, nonce_insert, pkce_verifier_insert, save);
+
+    println!("My session ID is outbound {:?}", session.id());
 
     match result {
-        (Ok(_), Ok(_), Ok(_)) => Redirect::temporary(authorize_url.as_str()).into_response(),
+        (Ok(_), Ok(_), Ok(_), Ok(_)) => Redirect::temporary(authorize_url.as_str()).into_response(),
         _ => (
             StatusCode::INTERNAL_SERVER_ERROR,
             "Error storing auth details into session",
@@ -94,12 +96,15 @@ async fn get_user_details(
         .build()
         .map_err(|_| "Could not construct http client")?;
 
+    println!("My session ID is CB {:?}", session.id());
+
     let csrf_token = session.get::<String>(OIDC_CSRF_TOKEN_KEY);
     let nonce = session.get::<Nonce>(OIDC_NONCE_KEY);
     let pkce_verifier = session.get::<PkceCodeVerifier>(OIDC_PKCE_VERIFIER_KEY);
 
     // TODO: delete verification info above from session
 
+    println!("{:?}", session);
     let results = join!(csrf_token, nonce, pkce_verifier);
 
     println!("{:?}", results);
@@ -113,7 +118,10 @@ async fn get_user_details(
                 .set_pkce_verifier(verifier)
                 .request_async(&http_client)
                 .await
-                .map_err(|_| "Could not make call with exchange code")?;
+                .map_err(|err| {
+                    println!("err {:?}", err);
+                    "Could not make call with exchange code"
+                })?;
             let id_token_verifier = client.id_token_verifier();
             let token = token_response
                 .id_token()
