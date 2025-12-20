@@ -46,7 +46,7 @@ async fn main() {
             }),
         )
         .route(
-            "/api/oidc-callback",
+            "/oidc-callback",
             get({
                 let oidc_client = Arc::clone(&shared_oidc_client);
                 move |session, code, state| oidc_callback_handler(session, oidc_client, code, state)

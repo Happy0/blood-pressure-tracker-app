@@ -205,14 +205,6 @@ pub async fn oidc_callback_handler(
 }
 
 pub async fn auth_middleware(session: Session, request: Request, next: Next) -> Response {
-    println!("Running auth middleware");
-
-    let is_api_request = request.uri().to_string().starts_with("/api/");
-
-    if (!is_api_request) {
-        return next.run(request).await
-    }
-
     let result = session.get::<String>(SUBJECT_SESSION_KEY).await;
 
     match result {

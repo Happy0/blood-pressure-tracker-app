@@ -58,7 +58,10 @@ pub async fn get_oidc_client() -> Result<
 
     let provider_metadata = CoreProviderMetadata::discover_async(issuer_url, &http_client)
         .await
-        .map_err(|_| "Could not discover OIDC provider metadata")?;
+        .map_err(|e| {
+            println!("{:?}", e);
+            "Could not discover OIDC provider metadata"
+        })?;
 
     let result =
         CoreClient::from_provider_metadata(provider_metadata, client_id, Some(client_secret))
