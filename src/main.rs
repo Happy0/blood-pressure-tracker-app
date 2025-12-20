@@ -4,7 +4,6 @@ use std::sync::Arc;
 use axum::{Json, middleware};
 use axum::response::IntoResponse;
 use axum::{Router, routing::get, routing::post};
-use reqwest::StatusCode;
 use serde::Serialize;
 use tower_http::services::{ServeDir, ServeFile};
 use tower_sessions::cookie::time::Duration;
@@ -39,7 +38,7 @@ async fn main() {
     let app = Router::new()
         .route("/api/run-ocr", post(run_ocr))
         .route(
-            "/api/login",
+            "/login",
             get({
                 let oidc_client = Arc::clone(&shared_oidc_client);
                 move |session| login_handler(session, oidc_client)
@@ -49,7 +48,7 @@ async fn main() {
             "/oidc-callback",
             get({
                 let oidc_client = Arc::clone(&shared_oidc_client);
-                move |session, code, state| oidc_callback_handler(session, oidc_client, code, state)
+                move |session, params| oidc_callback_handler(session, oidc_client, params)
             }),
         )
         .route(

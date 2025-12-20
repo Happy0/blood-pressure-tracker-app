@@ -10,6 +10,7 @@ use openidconnect::{
     core::{CoreClient, CoreResponseType},
 };
 use reqwest::{ StatusCode};
+use serde::Deserialize;
 use tokio::join;
 use tower_sessions::Session;
 
@@ -21,6 +22,12 @@ const SUBJECT_SESSION_KEY: &str = "OIDC_SUBJECT_KEY";
 
 struct OpenIdDetails {
     subject: String,
+}
+
+#[derive(Deserialize)]
+pub struct CallBackParameters {
+    code: String, 
+    state: String
 }
 
 pub async fn login_handler(
@@ -95,6 +102,8 @@ async fn get_user_details(
 
     let results = join!(csrf_token, nonce, pkce_verifier);
 
+    println!("{:?}", results);
+
     match results {
         (Ok(Some(csrf_token)), Ok(Some(nonce)), Ok(Some(verifier))) => {
             let exchange_code = client
@@ -163,12 +172,13 @@ pub async fn oidc_callback_handler(
             EndpointMaybeSet,
         >,
     >,
-    code: Query<String>,
-    state: Query<String>,
+    query_params: Query<CallBackParameters>
 ) -> Response {
-    let authorization_code = AuthorizationCode::new(code.0);
+    let CallBackParameters {code, state} = query_params.0;
 
-    let details = get_user_details(&session, client, authorization_code, state.0).await;
+    let authorization_code = AuthorizationCode::new(code);
+
+    let details = get_user_details(&session, client, authorization_code, state).await;
 
     match details {
         Ok(user_details) => {
@@ -205,6 +215,13 @@ pub async fn oidc_callback_handler(
 }
 
 pub async fn auth_middleware(session: Session, request: Request, next: Next) -> Response {
+
+    let is_api_request = request.uri().to_string().starts_with("/api/");
+
+    if (!is_api_request) {
+        return next.run(request).await
+    }
+
     let result = session.get::<String>(SUBJECT_SESSION_KEY).await;
 
     match result {
