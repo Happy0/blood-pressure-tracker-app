@@ -28,6 +28,7 @@ async fn main() {
         // TODO: configure via environment
         .with_secure(false)
         .with_http_only(true)
+        .with_same_site(tower_sessions::cookie::SameSite::Lax)
         .with_expiry(Expiry::OnInactivity(Duration::weeks(2)));
 
     let serve_dir = ServeDir::new(&target_assets_directory).fallback(ServeFile::new(format!(

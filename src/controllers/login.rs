@@ -15,7 +15,7 @@ use tokio::join;
 use tower_sessions::Session;
 
 const OIDC_CSRF_TOKEN_KEY: &str = "OIDC_CSRF_TOKEN";
-const OIDC_NONCE_KEY: &str = "OIDC_CSRF_TOKEN";
+const OIDC_NONCE_KEY: &str = "OIDC_NONCE";
 const OIDC_PKCE_VERIFIER_KEY: &str = "OIDC_PKCE_VERIFIER";
 
 const SUBJECT_SESSION_KEY: &str = "OIDC_SUBJECT_KEY";
@@ -56,7 +56,7 @@ pub async fn login_handler(
         .set_pkce_challenge(pkce_challenge)
         .url();
 
-    let csrf_insert = session.insert(OIDC_CSRF_TOKEN_KEY, csrf_state);
+    let csrf_insert = session.insert(OIDC_CSRF_TOKEN_KEY, csrf_state.secret());
     let nonce_insert = session.insert(OIDC_NONCE_KEY, nonce);
     let pkce_verifier_insert = session.insert(OIDC_PKCE_VERIFIER_KEY, pkce_verifier);
     let save = session.save();
@@ -130,7 +130,12 @@ async fn get_user_details(
                 .claims(&id_token_verifier, &nonce)
                 .map_err(|_| "Could not verify claims")?;
 
-            if (csrf_token != state) {
+            let statearoonie = CsrfToken::new(state);
+
+            if csrf_token != *statearoonie.secret() {
+                println!("Stored is: {:?}", csrf_token);
+                println!("Received is: {:?}", statearoonie.secret());
+
                 return Err("Could not verify CSRF token.".to_string());
             }
 
