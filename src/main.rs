@@ -1,8 +1,8 @@
 use std::env;
 use std::sync::Arc;
 
-use axum::{Json, middleware};
 use axum::response::IntoResponse;
+use axum::{Json, middleware};
 use axum::{Router, routing::get, routing::post};
 use serde::Serialize;
 use tower_http::services::{ServeDir, ServeFile};
@@ -54,11 +54,7 @@ async fn main() {
         )
         .route(
             "/api/user-info",
-            get({
-                async |session: Session| {
-                    Json(UserInfo{}).into_response()
-                }
-            })
+            get({ async |session: Session| Json(UserInfo {}).into_response() }),
         )
         .route_layer(middleware::from_fn(auth_middleware))
         .fallback_service(serve_dir)

@@ -1,15 +1,17 @@
 use std::sync::Arc;
 
 use axum::{
-    extract::{Query, Request}, middleware::Next, response::{IntoResponse, Redirect, Response}
+    extract::{Query, Request},
+    middleware::Next,
+    response::{IntoResponse, Redirect, Response},
 };
 use openidconnect::{
-    AccessTokenHash, AuthenticationFlow, AuthorizationCode, CsrfToken,
-    EndpointMaybeSet, EndpointNotSet, EndpointSet, Nonce, OAuth2TokenResponse, PkceCodeChallenge,
-    PkceCodeVerifier, Scope, TokenResponse,
+    AccessTokenHash, AuthenticationFlow, AuthorizationCode, CsrfToken, EndpointMaybeSet,
+    EndpointNotSet, EndpointSet, Nonce, OAuth2TokenResponse, PkceCodeChallenge, PkceCodeVerifier,
+    Scope, TokenResponse,
     core::{CoreClient, CoreResponseType},
 };
-use reqwest::{ StatusCode};
+use reqwest::StatusCode;
 use serde::Deserialize;
 use tokio::join;
 use tower_sessions::Session;
@@ -26,8 +28,8 @@ struct OpenIdDetails {
 
 #[derive(Deserialize)]
 pub struct CallBackParameters {
-    code: String, 
-    state: String
+    code: String,
+    state: String,
 }
 
 pub async fn login_handler(
@@ -53,6 +55,7 @@ pub async fn login_handler(
         )
         // This example is requesting access to the the user's profile including email.
         .add_scope(Scope::new("email".to_string()))
+        .add_scope(Scope::new("openid".to_string()))
         .set_pkce_challenge(pkce_challenge)
         .url();
 
@@ -126,6 +129,7 @@ async fn get_user_details(
             let token = token_response
                 .id_token()
                 .ok_or_else(|| "Service did not return an ID token")?;
+
             let claims = token
                 .claims(&id_token_verifier, &nonce)
                 .map_err(|_| "Could not verify claims")?;
@@ -139,28 +143,26 @@ async fn get_user_details(
                 return Err("Could not verify CSRF token.".to_string());
             }
 
-            let expected_token_hash = claims
-                .access_token_hash()
-                .ok_or_else(|| "No token hash".to_string())?;
+            if let Some(expected_token_hash) = claims.access_token_hash() {
+                let token_signing_algorithm = token
+                    .signing_alg()
+                    .map_err(|_| "Problem with token signing algorithm")?;
+                let token_signing_key = token
+                    .signing_key(&id_token_verifier)
+                    .map_err(|_| "Problem with signing key")?;
 
-            let token_signing_algorithm = token
-                .signing_alg()
-                .map_err(|_| "Problem with token signing algorithm")?;
-            let token_signing_key = token
-                .signing_key(&id_token_verifier)
-                .map_err(|_| "Problem with signing key")?;
+                let access_token = token_response.access_token();
 
-            let access_token = token_response.access_token();
+                let actual_token_hash = AccessTokenHash::from_token(
+                    &access_token,
+                    token_signing_algorithm,
+                    token_signing_key,
+                )
+                .map_err(|_| "Problem creating token hash")?;
 
-            let actual_token_hash = AccessTokenHash::from_token(
-                &access_token,
-                token_signing_algorithm,
-                token_signing_key,
-            )
-            .map_err(|_| "Problem creating token hash")?;
-
-            if actual_token_hash != *expected_token_hash {
-                return Err("Invalid access token".to_string());
+                if actual_token_hash != *expected_token_hash {
+                    return Err("Invalid access token".to_string());
+                }
             }
 
             let subject: &openidconnect::SubjectIdentifier = claims.subject();
@@ -185,9 +187,9 @@ pub async fn oidc_callback_handler(
             EndpointMaybeSet,
         >,
     >,
-    query_params: Query<CallBackParameters>
+    query_params: Query<CallBackParameters>,
 ) -> Response {
-    let CallBackParameters {code, state} = query_params.0;
+    let CallBackParameters { code, state } = query_params.0;
 
     let authorization_code = AuthorizationCode::new(code);
 
@@ -203,7 +205,7 @@ pub async fn oidc_callback_handler(
             let d2 = session.remove::<Nonce>(OIDC_NONCE_KEY);
             let d3 = session.remove::<PkceCodeVerifier>(OIDC_PKCE_VERIFIER_KEY);
 
-            _ = join!(d1,d2,d3);
+            _ = join!(d1, d2, d3);
 
             if store_subject_result.is_err() {
                 return (
@@ -228,17 +230,16 @@ pub async fn oidc_callback_handler(
 }
 
 pub async fn auth_middleware(session: Session, request: Request, next: Next) -> Response {
-
     let is_api_request = request.uri().to_string().starts_with("/api/");
 
     if (!is_api_request) {
-        return next.run(request).await
+        return next.run(request).await;
     }
 
     let result = session.get::<String>(SUBJECT_SESSION_KEY).await;
 
     match result {
         Ok(Some(_)) => return next.run(request).await,
-        _ => return (StatusCode::UNAUTHORIZED).into_response()
+        _ => return (StatusCode::UNAUTHORIZED).into_response(),
     }
 }
