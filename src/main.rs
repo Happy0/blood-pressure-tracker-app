@@ -1,15 +1,22 @@
 use std::env;
 use std::sync::Arc;
 
+use axum::{Json, middleware};
+use axum::response::IntoResponse;
 use axum::{Router, routing::get, routing::post};
+use reqwest::StatusCode;
+use serde::Serialize;
 use tower_http::services::{ServeDir, ServeFile};
 use tower_sessions::cookie::time::Duration;
-use tower_sessions::{Expiry, MemoryStore, SessionManagerLayer};
+use tower_sessions::{Expiry, MemoryStore, Session, SessionManagerLayer};
 
 mod auth;
 mod controllers;
-use crate::controllers::login::{login_handler, oidc_callback_handler};
+use crate::controllers::login::{auth_middleware, login_handler, oidc_callback_handler};
 use crate::controllers::ocr::run_ocr;
+
+#[derive(Serialize)]
+struct UserInfo {}
 
 #[tokio::main]
 async fn main() {
@@ -21,6 +28,7 @@ async fn main() {
     let session_layer = SessionManagerLayer::new(session_store)
         // TODO: configure via environment
         .with_secure(false)
+        .with_http_only(true)
         .with_expiry(Expiry::OnInactivity(Duration::weeks(2)));
 
     let serve_dir = ServeDir::new(&target_assets_directory).fallback(ServeFile::new(format!(
@@ -29,21 +37,30 @@ async fn main() {
     )));
 
     let app = Router::new()
-        .route("/run-ocr", post(run_ocr))
+        .route("/api/run-ocr", post(run_ocr))
         .route(
-            "/login",
+            "/api/login",
             get({
                 let oidc_client = Arc::clone(&shared_oidc_client);
                 move |session| login_handler(session, oidc_client)
             }),
         )
         .route(
-            "/oidc-callback",
+            "/api/oidc-callback",
             get({
                 let oidc_client = Arc::clone(&shared_oidc_client);
                 move |session, code, state| oidc_callback_handler(session, oidc_client, code, state)
             }),
         )
+        .route(
+            "/api/user-info",
+            get({
+                async |session: Session| {
+                    Json(UserInfo{}).into_response()
+                }
+            })
+        )
+        .route_layer(middleware::from_fn(auth_middleware))
         .fallback_service(serve_dir)
         .layer(session_layer);
 

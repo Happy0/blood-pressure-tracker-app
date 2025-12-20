@@ -1,16 +1,15 @@
 use std::sync::Arc;
 
 use axum::{
-    extract::Query,
-    response::{IntoResponse, Redirect, Response},
+    extract::{Query, Request}, middleware::Next, response::{IntoResponse, Redirect, Response}
 };
 use openidconnect::{
-    AccessToken, AccessTokenHash, AuthenticationFlow, AuthorizationCode, CsrfToken,
+    AccessTokenHash, AuthenticationFlow, AuthorizationCode, CsrfToken,
     EndpointMaybeSet, EndpointNotSet, EndpointSet, Nonce, OAuth2TokenResponse, PkceCodeChallenge,
     PkceCodeVerifier, Scope, TokenResponse,
     core::{CoreClient, CoreResponseType},
 };
-use reqwest::StatusCode;
+use reqwest::{ StatusCode};
 use tokio::join;
 use tower_sessions::Session;
 
@@ -202,5 +201,22 @@ pub async fn oidc_callback_handler(
             )
                 .into_response()
         }
+    }
+}
+
+pub async fn auth_middleware(session: Session, request: Request, next: Next) -> Response {
+    println!("Running auth middleware");
+
+    let is_api_request = request.uri().to_string().starts_with("/api/");
+
+    if (!is_api_request) {
+        return next.run(request).await
+    }
+
+    let result = session.get::<String>(SUBJECT_SESSION_KEY).await;
+
+    match result {
+        Ok(Some(_)) => return next.run(request).await,
+        _ => return (StatusCode::UNAUTHORIZED).into_response()
     }
 }
