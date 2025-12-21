@@ -20,7 +20,13 @@ struct UserInfo {}
 #[tokio::main]
 async fn main() {
     let target_assets_directory = env::var("CLIENT_ASSETS_PATH").unwrap_or("client".to_string());
-    let oidc_client = auth::oidc::get_oidc_client().await.unwrap();
+
+    let shared_http_client = reqwest::Client::builder()
+        .redirect(reqwest::redirect::Policy::none())
+        .build()
+        .map_err(|_| "Could not construct http client").unwrap();
+
+    let oidc_client = auth::oidc::get_oidc_client(&shared_http_client).await.unwrap();
     let shared_oidc_client = Arc::new(oidc_client);
 
     let session_store = MemoryStore::default();
@@ -49,7 +55,7 @@ async fn main() {
             "/oidc-callback",
             get({
                 let oidc_client = Arc::clone(&shared_oidc_client);
-                move |session, params| oidc_callback_handler(session, oidc_client, params)
+                move |session, params| oidc_callback_handler(session, oidc_client,shared_http_client , params)
             }),
         )
         .route(

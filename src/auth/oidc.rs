@@ -1,9 +1,9 @@
-use axum::http;
 use openidconnect::core::{CoreClient, CoreProviderMetadata};
 use openidconnect::{
     ClientId, ClientSecret, EndpointMaybeSet, EndpointNotSet, EndpointSet, IssuerUrl, RedirectUrl,
     reqwest,
 };
+use reqwest::Client;
 use std::env;
 
 struct OidcSettings {
@@ -31,7 +31,7 @@ fn get_oidc_client_settings() -> Result<OidcSettings, String> {
     })
 }
 
-pub async fn get_oidc_client() -> Result<
+pub async fn get_oidc_client(http_client: &Client) -> Result<
     CoreClient<
         EndpointSet,
         EndpointNotSet,
@@ -51,12 +51,7 @@ pub async fn get_oidc_client() -> Result<
     let redirect_url =
         RedirectUrl::new(settings.redirect_url).map_err(|_| "Could not construct redirect URL")?;
 
-    let http_client = reqwest::Client::builder()
-        .redirect(reqwest::redirect::Policy::none())
-        .build()
-        .map_err(|_| "Could not construct http client")?;
-
-    let provider_metadata = CoreProviderMetadata::discover_async(issuer_url, &http_client)
+    let provider_metadata = CoreProviderMetadata::discover_async(issuer_url, http_client)
         .await
         .map_err(|e| {
             println!("{:?}", e);

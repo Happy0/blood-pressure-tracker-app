@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::{io::Read, sync::Arc};
 
 use axum::{
     extract::{Query, Request},
@@ -10,6 +10,7 @@ use openidconnect::{
     EndpointNotSet, EndpointSet, Nonce, OAuth2TokenResponse, PkceCodeChallenge, PkceCodeVerifier,
     Scope, TokenResponse,
     core::{CoreClient, CoreResponseType},
+    reqwest::Client
 };
 use reqwest::StatusCode;
 use serde::Deserialize;
@@ -66,8 +67,6 @@ pub async fn login_handler(
 
     let result = join!(csrf_insert, nonce_insert, pkce_verifier_insert, save);
 
-    println!("My session ID is outbound {:?}", session.id());
-
     match result {
         (Ok(_), Ok(_), Ok(_), Ok(_)) => Redirect::temporary(authorize_url.as_str()).into_response(),
         _ => (
@@ -90,27 +89,16 @@ async fn get_user_details(
             EndpointMaybeSet,
         >,
     >,
+    http_client: Client,
     authorization_code: AuthorizationCode,
     state: String,
 ) -> Result<OpenIdDetails, String> {
-    // TODO: share client between handler calls
-    let http_client = reqwest::Client::builder()
-        .redirect(reqwest::redirect::Policy::none())
-        .build()
-        .map_err(|_| "Could not construct http client")?;
-
-    println!("My session ID is CB {:?}", session.id());
 
     let csrf_token = session.get::<String>(OIDC_CSRF_TOKEN_KEY);
     let nonce = session.get::<Nonce>(OIDC_NONCE_KEY);
     let pkce_verifier = session.get::<PkceCodeVerifier>(OIDC_PKCE_VERIFIER_KEY);
 
-    // TODO: delete verification info above from session
-
-    println!("{:?}", session);
     let results = join!(csrf_token, nonce, pkce_verifier);
-
-    println!("{:?}", results);
 
     match results {
         (Ok(Some(csrf_token)), Ok(Some(nonce)), Ok(Some(verifier))) => {
@@ -137,9 +125,6 @@ async fn get_user_details(
             let statearoonie = CsrfToken::new(state);
 
             if csrf_token != *statearoonie.secret() {
-                println!("Stored is: {:?}", csrf_token);
-                println!("Received is: {:?}", statearoonie.secret());
-
                 return Err("Could not verify CSRF token.".to_string());
             }
 
@@ -177,7 +162,7 @@ async fn get_user_details(
 
 pub async fn oidc_callback_handler(
     session: Session,
-    client: Arc<
+    oidc_client: Arc<
         CoreClient<
             EndpointSet,
             EndpointNotSet,
@@ -187,13 +172,14 @@ pub async fn oidc_callback_handler(
             EndpointMaybeSet,
         >,
     >,
+    http_client: Client,
     query_params: Query<CallBackParameters>,
 ) -> Response {
     let CallBackParameters { code, state } = query_params.0;
 
     let authorization_code = AuthorizationCode::new(code);
 
-    let details = get_user_details(&session, client, authorization_code, state).await;
+    let details = get_user_details(&session, oidc_client, http_client, authorization_code, state).await;
 
     match details {
         Ok(user_details) => {
@@ -215,11 +201,9 @@ pub async fn oidc_callback_handler(
                     .into_response();
             }
 
-            println!("Logged in!");
             Redirect::temporary("/").into_response()
         }
         Err(err_details) => {
-            println!("Err: {:?}", err_details);
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 "Authentication not successful.",
