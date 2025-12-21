@@ -4,17 +4,12 @@ import './assets/main.css'
 import 'primeicons/primeicons.css'
 import { useRoute } from 'vue-router';
 import axios from 'axios'
+import LoginLogoutButton from './components/LoginLogoutButton.vue';
 
 const route = useRoute()
 
 const axiosInstance = axios.create();
 axiosInstance.defaults.maxRedirects = 0; 
-
-function login() {
-  axiosInstance.get("/login").then(result => console.log(result));
-
-  console.log("IHIHIHI")
-}
 
 </script>
 
@@ -36,13 +31,7 @@ function login() {
         View Readings (coming soon)
       </button>
 
-      <a
-          href="/login"
-          class="text-center py-3 rounded-xl border bg-blue-500 text-white font-medium hover:bg-blue-600 transition"
-        >
-          Login
-    </a>
-
+      <LoginLogoutButton/>
     </div>
   </div>
   <main>
