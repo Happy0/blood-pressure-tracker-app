@@ -1,4 +1,4 @@
-use std::{io::Read, sync::Arc};
+use std::sync::Arc;
 
 use axum::{
     extract::{Query, Request},
@@ -10,7 +10,7 @@ use openidconnect::{
     EndpointNotSet, EndpointSet, Nonce, OAuth2TokenResponse, PkceCodeChallenge, PkceCodeVerifier,
     Scope, TokenResponse,
     core::{CoreClient, CoreResponseType},
-    reqwest::Client
+    reqwest::Client,
 };
 use reqwest::StatusCode;
 use serde::Deserialize;
@@ -93,7 +93,6 @@ async fn get_user_details(
     authorization_code: AuthorizationCode,
     state: String,
 ) -> Result<OpenIdDetails, String> {
-
     let csrf_token = session.get::<String>(OIDC_CSRF_TOKEN_KEY);
     let nonce = session.get::<Nonce>(OIDC_NONCE_KEY);
     let pkce_verifier = session.get::<PkceCodeVerifier>(OIDC_PKCE_VERIFIER_KEY);
@@ -179,7 +178,14 @@ pub async fn oidc_callback_handler(
 
     let authorization_code = AuthorizationCode::new(code);
 
-    let details = get_user_details(&session, oidc_client, http_client, authorization_code, state).await;
+    let details = get_user_details(
+        &session,
+        oidc_client,
+        http_client,
+        authorization_code,
+        state,
+    )
+    .await;
 
     match details {
         Ok(user_details) => {
@@ -203,13 +209,20 @@ pub async fn oidc_callback_handler(
 
             Redirect::temporary("/").into_response()
         }
-        Err(err_details) => {
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                "Authentication not successful.",
-            )
-                .into_response()
-        }
+        Err(err_details) => (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            "Authentication not successful.",
+        )
+            .into_response(),
+    }
+}
+
+pub async fn logout_handler(session: Session) -> Response {
+    let result = session.flush().await;
+
+    match result {
+        Ok(_) => Redirect::temporary("/").into_response(),
+        Err(_) => (StatusCode::INTERNAL_SERVER_ERROR).into_response(),
     }
 }
 

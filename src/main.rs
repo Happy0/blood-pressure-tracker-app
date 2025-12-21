@@ -11,7 +11,9 @@ use tower_sessions::{Expiry, MemoryStore, Session, SessionManagerLayer};
 
 mod auth;
 mod controllers;
-use crate::controllers::login::{auth_middleware, login_handler, oidc_callback_handler};
+use crate::controllers::login::{
+    auth_middleware, login_handler, logout_handler, oidc_callback_handler,
+};
 use crate::controllers::ocr::run_ocr;
 
 #[derive(Serialize)]
@@ -24,9 +26,12 @@ async fn main() {
     let shared_http_client = reqwest::Client::builder()
         .redirect(reqwest::redirect::Policy::none())
         .build()
-        .map_err(|_| "Could not construct http client").unwrap();
+        .map_err(|_| "Could not construct http client")
+        .unwrap();
 
-    let oidc_client = auth::oidc::get_oidc_client(&shared_http_client).await.unwrap();
+    let oidc_client = auth::oidc::get_oidc_client(&shared_http_client)
+        .await
+        .unwrap();
     let shared_oidc_client = Arc::new(oidc_client);
 
     let session_store = MemoryStore::default();
@@ -51,16 +56,19 @@ async fn main() {
                 move |session| login_handler(session, oidc_client)
             }),
         )
+        .route("/logout", get({ move |session| logout_handler(session) }))
         .route(
             "/oidc-callback",
             get({
                 let oidc_client = Arc::clone(&shared_oidc_client);
-                move |session, params| oidc_callback_handler(session, oidc_client,shared_http_client , params)
+                move |session, params| {
+                    oidc_callback_handler(session, oidc_client, shared_http_client, params)
+                }
             }),
         )
         .route(
             "/api/user-info",
-            get({ async |session: Session| Json(UserInfo {}).into_response() }),
+            get(async |session: Session| Json(UserInfo {}).into_response()),
         )
         .route_layer(middleware::from_fn(auth_middleware))
         .fallback_service(serve_dir)

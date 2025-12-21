@@ -31,7 +31,9 @@ fn get_oidc_client_settings() -> Result<OidcSettings, String> {
     })
 }
 
-pub async fn get_oidc_client(http_client: &Client) -> Result<
+pub async fn get_oidc_client(
+    http_client: &Client,
+) -> Result<
     CoreClient<
         EndpointSet,
         EndpointNotSet,
