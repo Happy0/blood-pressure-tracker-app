@@ -1,3 +1,4 @@
 /target
 /debug
 run-dev.sh
+test.db

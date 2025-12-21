@@ -4,6 +4,7 @@ use std::sync::Arc;
 use axum::response::IntoResponse;
 use axum::{Json, middleware};
 use axum::{Router, routing::get, routing::post};
+use chrono::{DateTime, Utc};
 use serde::Serialize;
 use tower_http::services::{ServeDir, ServeFile};
 use tower_sessions::cookie::time::Duration;
@@ -11,10 +12,14 @@ use tower_sessions::{Expiry, MemoryStore, Session, SessionManagerLayer};
 
 mod auth;
 mod controllers;
+mod repositories;
+
 use crate::controllers::login::{
     auth_middleware, login_handler, logout_handler, oidc_callback_handler,
 };
 use crate::controllers::ocr::run_ocr;
+use crate::repositories::blood_pressure_readings_repository::{BloodPressureReadingEntity, BloodPressureReadingRepository};
+use crate::repositories::sql_lite::sql_lite_blood_pressure_reading_repository::SqlLiteBloodPressureReadingRepository;
 
 #[derive(Serialize)]
 struct UserInfo {}
@@ -46,6 +51,20 @@ async fn main() {
         "{}/index.html",
         target_assets_directory
     )));
+
+    let database = SqlLiteBloodPressureReadingRepository::new("sqlite:test.db".to_string()).await.unwrap();
+
+    let test_entity: BloodPressureReadingEntity = BloodPressureReadingEntity {
+        diastolic: 90,
+        pulse:80,
+        systolic: 120,
+        reading_id: "read".to_string(),
+        user_id:"user_id".to_string(),
+        taken: Utc::now()
+    };
+
+    database.save(test_entity).await.unwrap();
+    
 
     let app = Router::new()
         .route("/api/run-ocr", post(run_ocr))
