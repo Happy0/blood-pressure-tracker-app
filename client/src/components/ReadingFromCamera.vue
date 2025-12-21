@@ -68,7 +68,7 @@
 
                             console.log(formData)
 
-                            fetch("/run-ocr", {
+                            fetch("/api/run-ocr", {
                                 method: 'POST',
                                 body: formData
                             })

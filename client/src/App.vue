@@ -1,16 +1,20 @@
 <script setup lang="ts">
 
-import BloodPressureReadingForm from './components/BloodPressureReadingForm.vue'
 import './assets/main.css'
 import 'primeicons/primeicons.css'
 import { useRoute } from 'vue-router';
+import axios from 'axios'
+import LoginLogoutButton from './components/LoginLogoutButton.vue';
 
 const route = useRoute()
+
+const axiosInstance = axios.create();
+axiosInstance.defaults.maxRedirects = 0; 
 
 </script>
 
 <template>
-  <div v-if="route.path === '/'" to="/reading" class="flex flex-col items-center justify-center min-h-screen bg-gray-50 p-6">
+  <div v-if="route.path === '/'" class="flex flex-col items-center justify-center min-h-screen bg-gray-50 p-6">
     <div class="bg-white shadow-lg rounded-2xl p-8 w-full max-w-sm flex flex-col gap-4">
 
       <RouterLink
@@ -27,6 +31,7 @@ const route = useRoute()
         View Readings (coming soon)
       </button>
 
+      <LoginLogoutButton/>
     </div>
   </div>
   <main>
