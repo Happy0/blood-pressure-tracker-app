@@ -114,7 +114,7 @@ impl BloodPressureReadingRepository for SqlLiteBloodPressureReadingRepository {
     > {
 
         let query_result =
-            sqlx::query("select * from reading WHERE user_id = ? AND taken >= ? AND taken <= ?")
+            sqlx::query("select * from reading WHERE user_id = ? AND taken >= ? AND taken <= ? ORDER BY taken DESC")
                 .bind(user_id)
                 .bind(from.to_rfc3339())
                 .bind(to.to_rfc3339())

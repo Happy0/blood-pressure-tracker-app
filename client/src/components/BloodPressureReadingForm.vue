@@ -1,4 +1,7 @@
 <script lang="ts" setup>
+    import { useRouter } from 'vue-router';
+
+    const router = useRouter();
 
     const now = new Date()
 
@@ -33,6 +36,12 @@
             },
             body: JSON.stringify(payload)
         })
+
+        router.push({
+            path: `/view-readings`
+        })
+
+
     }
 
 </script>
