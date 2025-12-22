@@ -15,7 +15,7 @@ mod auth;
 mod controllers;
 mod repositories;
 
-use crate::controllers::blood_pressure_reading::{BloodPressureReadingSubmission, add_reading};
+use crate::controllers::blood_pressure_reading::{BloodPressureReadingSubmission, add_reading, get_readings};
 use crate::controllers::login::{
     auth_middleware, login_handler, logout_handler, oidc_callback_handler,
 };
@@ -94,6 +94,11 @@ async fn main() {
                 move |session, body| add_reading(repository, session, body)
             }),
         )
+        .route("/api/reading", get({
+            let repository = Arc::clone(&blood_pressure_reading_repository);
+
+            move|session,params| get_readings(repository, session, params)
+        }))
         .route_layer(middleware::from_fn(auth_middleware))
         .fallback_service(serve_dir)
         .layer(session_layer);
