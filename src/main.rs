@@ -41,6 +41,7 @@ async fn main() {
         .unwrap();
     let shared_oidc_client = Arc::new(oidc_client);
 
+    // TODO: persist to a database
     let session_store = MemoryStore::default();
     let session_layer = SessionManagerLayer::new(session_store)
         // TODO: configure via environment
@@ -55,7 +56,6 @@ async fn main() {
     )));
 
     let database = Arc::new(SqlLiteBloodPressureReadingRepository::new("sqlite:test.db".to_string()).await.unwrap());
-
     
     let app = Router::new()
         .route("/api/run-ocr", post(run_ocr))

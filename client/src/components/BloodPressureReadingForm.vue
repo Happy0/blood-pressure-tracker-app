@@ -17,8 +17,6 @@
     }
 
     async function onSubmit(params: any) {
-        console.log(params);
-
         const payload = {
             ...params.values,
             systolic: parseInt(params.values.systolic),
@@ -27,16 +25,14 @@
             taken: params.values.taken.toISOString(),
         };
 
-        const result = await fetch("/api/reading", {
+        // TODO: handle error status codes
+        await fetch("/api/reading", {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify(payload)
         })
-
-        console.log(result);
-
     }
 
 </script>
