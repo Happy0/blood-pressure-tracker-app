@@ -4,6 +4,7 @@ use std::sync::Arc;
 use axum::response::IntoResponse;
 use axum::{Json, middleware};
 use axum::{Router, routing::get, routing::post};
+use axum_macros::debug_handler;
 use chrono::{DateTime, Utc};
 use serde::Serialize;
 use tower_http::services::{ServeDir, ServeFile};
@@ -14,6 +15,7 @@ mod auth;
 mod controllers;
 mod repositories;
 
+use crate::controllers::blood_pressure_reading::{BloodPressureReadingSubmission, add_reading};
 use crate::controllers::login::{
     auth_middleware, login_handler, logout_handler, oidc_callback_handler,
 };
@@ -52,9 +54,9 @@ async fn main() {
         target_assets_directory
     )));
 
-    let database = SqlLiteBloodPressureReadingRepository::new("sqlite:test.db".to_string()).await.unwrap();
-    
+    let database = Arc::new(SqlLiteBloodPressureReadingRepository::new("sqlite:test.db".to_string()).await.unwrap());
 
+    
     let app = Router::new()
         .route("/api/run-ocr", post(run_ocr))
         .route(
@@ -78,6 +80,14 @@ async fn main() {
             "/api/user-info",
             get(async |session: Session| Json(UserInfo {}).into_response()),
         )
+        .route("/api/reading", post({
+            let db = Arc::clone(&database);
+
+            move |session, body| {
+                add_reading(db, session, body)
+            }
+
+        }))
         .route_layer(middleware::from_fn(auth_middleware))
         .fallback_service(serve_dir)
         .layer(session_layer);
