@@ -20,7 +20,9 @@ use crate::controllers::login::{
     auth_middleware, login_handler, logout_handler, oidc_callback_handler,
 };
 use crate::controllers::ocr::run_ocr;
-use crate::repositories::blood_pressure_readings_repository::{BloodPressureReadingEntity, BloodPressureReadingRepository};
+use crate::repositories::blood_pressure_readings_repository::{
+    BloodPressureReadingEntity, BloodPressureReadingRepository,
+};
 use crate::repositories::sql_lite::sql_lite_blood_pressure_reading_repository::SqlLiteBloodPressureReadingRepository;
 
 #[derive(Serialize)]
@@ -55,8 +57,12 @@ async fn main() {
         target_assets_directory
     )));
 
-    let blood_pressure_reading_repository = Arc::new(SqlLiteBloodPressureReadingRepository::new("sqlite:test.db".to_string()).await.unwrap());
-    
+    let blood_pressure_reading_repository = Arc::new(
+        SqlLiteBloodPressureReadingRepository::new("sqlite:test.db".to_string())
+            .await
+            .unwrap(),
+    );
+
     let app = Router::new()
         .route("/api/run-ocr", post(run_ocr))
         .route(
@@ -80,14 +86,14 @@ async fn main() {
             "/api/user-info",
             get(async |session: Session| Json(UserInfo {}).into_response()),
         )
-        .route("/api/reading", post({
-            let repository = Arc::clone(&blood_pressure_reading_repository);
+        .route(
+            "/api/reading",
+            post({
+                let repository = Arc::clone(&blood_pressure_reading_repository);
 
-            move |session, body| {
-                add_reading(repository, session, body)
-            }
-
-        }))
+                move |session, body| add_reading(repository, session, body)
+            }),
+        )
         .route_layer(middleware::from_fn(auth_middleware))
         .fallback_service(serve_dir)
         .layer(session_layer);
