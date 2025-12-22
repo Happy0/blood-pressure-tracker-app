@@ -1,4 +1,4 @@
 /target
 /debug
 run-dev.sh
-test.db
+test.db*

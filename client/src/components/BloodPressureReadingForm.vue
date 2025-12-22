@@ -13,11 +13,30 @@
         systolic: props.systolic,
         diastolic: props.diastolic,
         pulse: props.pulse,
-        dateTime: now
+        taken: now
     }
 
-    function onSubmit(param: any) {
-        console.log(param)
+    async function onSubmit(params: any) {
+        console.log(params);
+
+        const payload = {
+            ...params.values,
+            systolic: parseInt(params.values.systolic),
+            diastolic: parseInt(params.values.diastolic),
+            pulse: parseInt(params.values.pulse),
+            taken: params.values.taken.toISOString(),
+        };
+
+        const result = await fetch("/api/reading", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(payload)
+        })
+
+        console.log(result);
+
     }
 
 </script>
@@ -41,7 +60,7 @@
         </div>
         <div>
         <label class="block mb-1 font-medium">Date</Label>
-        <DatePicker name="dateTime" :show-button-bar="true" showIcon :show-time="true" :placeholder="now.toString()"/>
+        <DatePicker name="taken" :show-button-bar="true" showIcon :show-time="true" :placeholder="now.toString()"/>
         </div>
             <Button type="submit" severity="secondary" label="Submit" fluid />
         <div class="pt-2 border-t mt-2 mx-auto">
