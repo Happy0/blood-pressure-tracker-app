@@ -3,13 +3,10 @@
 import './assets/main.css'
 import 'primeicons/primeicons.css'
 import { useRoute } from 'vue-router';
-import axios from 'axios'
 import LoginLogoutButton from './components/LoginLogoutButton.vue';
 
 const route = useRoute()
-
-const axiosInstance = axios.create();
-axiosInstance.defaults.maxRedirects = 0; 
+ 
 
 </script>
 
@@ -24,12 +21,12 @@ axiosInstance.defaults.maxRedirects = 0;
         Take Reading
       </RouterLink>
 
-      <button
-        disabled
-        class="py-3 rounded-xl border border-gray-300 text-gray-400 bg-gray-100 cursor-not-allowed"
+      <RouterLink
+        to="/view-readings"
+        class="text-center py-3 rounded-xl border bg-blue-500 text-white font-medium hover:bg-blue-600 transition"
       >
-        View Readings (coming soon)
-      </button>
+        View Readings
+      </RouterLink>
 
       <LoginLogoutButton/>
     </div>

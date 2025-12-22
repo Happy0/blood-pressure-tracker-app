@@ -1,3 +1,5 @@
+use std::env;
+
 use crate::repositories::blood_pressure_readings_repository::{
     BloodPressureReadingEntity, BloodPressureReadingRepository, RetrieveError, SaveError,
 };
@@ -18,6 +20,16 @@ impl SqlLiteBloodPressureReadingRepository {
         return Ok(SqlLiteBloodPressureReadingRepository {
             connection_pool: pool,
         });
+    }
+
+    fn get_db_path() -> String {
+        env::var("BP_APP_DB_PATH").unwrap_or("sqlite:test.db".to_string())
+    }
+
+    pub async fn new_from_env() -> Result<SqlLiteBloodPressureReadingRepository, Error> {
+        let path = Self::get_db_path();
+
+        Self::new(path).await
     }
 }
 
@@ -100,8 +112,9 @@ impl BloodPressureReadingRepository for SqlLiteBloodPressureReadingRepository {
         Vec<crate::repositories::blood_pressure_readings_repository::BloodPressureReadingEntity>,
         crate::repositories::blood_pressure_readings_repository::RetrieveError,
     > {
+
         let query_result =
-            sqlx::query("select * from reading WHERE user_id = ? AND taken >= ? AND taken >= ?")
+            sqlx::query("select * from reading WHERE user_id = ? AND taken >= ? AND taken <= ?")
                 .bind(user_id)
                 .bind(from.to_rfc3339())
                 .bind(to.to_rfc3339())

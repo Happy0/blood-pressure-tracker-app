@@ -13,7 +13,6 @@
     let intervalId: number | undefined = undefined;
 
     onUnmounted(() => {
-        console.log("Clearing! " + intervalId);
         clearInterval(intervalId)
     })
 

@@ -26,7 +26,6 @@ struct UserInfo {}
 #[tokio::main]
 async fn main() {
     let target_assets_directory = env::var("CLIENT_ASSETS_PATH").unwrap_or("client".to_string());
-    let db_path = get_db_path();
 
     let shared_http_client = reqwest::Client::builder()
         .redirect(reqwest::redirect::Policy::none())
@@ -54,7 +53,7 @@ async fn main() {
     )));
 
     let blood_pressure_reading_repository = Arc::new(
-        SqlLiteBloodPressureReadingRepository::new(db_path)
+        SqlLiteBloodPressureReadingRepository::new_from_env()
             .await
             .unwrap(),
     );
@@ -117,7 +116,4 @@ fn is_dev_mode() -> bool {
         "true" => true,
         _ => false,
     }
-}
-fn get_db_path() -> String {
-    env::var("BP_APP_DB_PATH").unwrap_or("sqlite:test_db.db".to_string())
 }
