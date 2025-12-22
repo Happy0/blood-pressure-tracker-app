@@ -53,17 +53,6 @@ async fn main() {
     )));
 
     let database = SqlLiteBloodPressureReadingRepository::new("sqlite:test.db".to_string()).await.unwrap();
-
-    let test_entity: BloodPressureReadingEntity = BloodPressureReadingEntity {
-        diastolic: 90,
-        pulse:80,
-        systolic: 120,
-        reading_id: "read".to_string(),
-        user_id:"user_id".to_string(),
-        taken: Utc::now()
-    };
-
-    database.save(test_entity).await.unwrap();
     
 
     let app = Router::new()
