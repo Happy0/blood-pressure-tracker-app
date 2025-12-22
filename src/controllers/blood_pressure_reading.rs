@@ -1,7 +1,9 @@
 use std::sync::Arc;
 
 use axum::{
-    Json, extract::Query, response::{IntoResponse, Response}
+    Json,
+    extract::Query,
+    response::{IntoResponse, Response},
 };
 use chrono::{DateTime, Utc};
 use reqwest::StatusCode;
@@ -29,15 +31,14 @@ pub struct BloodPressureReadingResponse {
     pub diastolic: i32,
     pub pulse: i32,
     pub taken: DateTime<Utc>,
-    pub id: String
+    pub id: String,
 }
 
 #[derive(Deserialize)]
 pub struct GetReadingQueryParameters {
     pub from_inclusive: DateTime<Utc>,
-    pub to_inclusive: DateTime<Utc>
+    pub to_inclusive: DateTime<Utc>,
 }
-
 
 async fn add_reading_to_database<T: BloodPressureReadingRepository>(
     reading_repository: &Arc<T>,
@@ -89,7 +90,7 @@ fn to_api_representation(entity: BloodPressureReadingEntity) -> BloodPressureRea
         diastolic: entity.diastolic,
         pulse: entity.pulse,
         taken: entity.taken,
-        id: entity.reading_id
+        id: entity.reading_id,
     }
 }
 
@@ -97,35 +98,44 @@ async fn get_readings_from_database<T: BloodPressureReadingRepository>(
     reading_repository: Arc<T>,
     session: Session,
     from: DateTime<Utc>,
-    to: DateTime<Utc>
+    to: DateTime<Utc>,
 ) -> Result<Vec<BloodPressureReadingResponse>, String> {
-
     let subject = session
         .get::<String>(SUBJECT_SESSION_KEY)
         .await
         .map_err(|_| "Could not access session")?;
 
     let user_id = subject.ok_or("Missing user ID in session")?;
-    let db_result = reading_repository.list(user_id, from, to).await.map_err(|_| "Error retrieving from database")?;
+    let db_result = reading_repository
+        .list(user_id, from, to)
+        .await
+        .map_err(|_| "Error retrieving from database")?;
 
-    let result: Vec<BloodPressureReadingResponse> = db_result.into_iter().map(|entity| to_api_representation(entity)).collect();
+    let result: Vec<BloodPressureReadingResponse> = db_result
+        .into_iter()
+        .map(|entity| to_api_representation(entity))
+        .collect();
 
     Ok(result)
-
 }
 
 pub async fn get_readings<T: BloodPressureReadingRepository>(
     reading_repository: Arc<T>,
     session: Session,
-    query: Query<GetReadingQueryParameters>
+    query: Query<GetReadingQueryParameters>,
 ) -> Response {
-
     // TODO: validate query parameters
 
-    let result = get_readings_from_database(reading_repository, session, query.from_inclusive, query.to_inclusive).await;
+    let result = get_readings_from_database(
+        reading_repository,
+        session,
+        query.from_inclusive,
+        query.to_inclusive,
+    )
+    .await;
 
     match result {
         Err(_) => (StatusCode::INTERNAL_SERVER_ERROR).into_response(),
-        Ok(result) => (StatusCode::OK, Json(result)).into_response()
+        Ok(result) => (StatusCode::OK, Json(result)).into_response(),
     }
 }

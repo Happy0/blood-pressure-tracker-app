@@ -229,7 +229,7 @@ pub async fn logout_handler(session: Session) -> Response {
 pub async fn auth_middleware(session: Session, request: Request, next: Next) -> Response {
     let is_api_request = request.uri().to_string().starts_with("/api/");
 
-    if (!is_api_request) {
+    if !is_api_request {
         return next.run(request).await;
     }
 

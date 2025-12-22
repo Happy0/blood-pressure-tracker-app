@@ -1,8 +1,11 @@
 use crate::repositories::blood_pressure_readings_repository::{
     BloodPressureReadingEntity, BloodPressureReadingRepository, RetrieveError, SaveError,
 };
-use chrono::{DateTime, Utc};
-use sqlx::{Error, Row, sqlite::{SqlitePool, SqliteRow}};
+use chrono::DateTime;
+use sqlx::{
+    Error, Row,
+    sqlite::{SqlitePool, SqliteRow},
+};
 
 pub struct SqlLiteBloodPressureReadingRepository {
     connection_pool: SqlitePool,
@@ -19,7 +22,9 @@ impl SqlLiteBloodPressureReadingRepository {
 }
 
 fn to_column_parse_error(column_name: &str) -> RetrieveError {
-    RetrieveError::DeserializationError { description: format!("Could not deserialize {} column", column_name) }
+    RetrieveError::DeserializationError {
+        description: format!("Could not deserialize {} column", column_name),
+    }
 }
 
 fn deserialize_row(
@@ -28,18 +33,37 @@ fn deserialize_row(
     crate::repositories::blood_pressure_readings_repository::BloodPressureReadingEntity,
     RetrieveError,
 > {
-    let reading_id: String =row.try_get("reading_id").map_err(|_| to_column_parse_error("reading_id"))?;
-    let user_id: String =row.try_get("user_id").map_err(|_| to_column_parse_error("user_id"))?;
-    let systolic: i32 =row.try_get("systolic").map_err(|_| to_column_parse_error("systolic"))?;
-    let diastolic: i32 =row.try_get("diastolic").map_err(|_| to_column_parse_error("diastolic"))?;
-    let pulse: i32 =row.try_get("pulse").map_err(|_| to_column_parse_error("pulse"))?;
-    let taken_raw: String = row.try_get("taken").map_err(|_| to_column_parse_error("taken"))?;
+    let reading_id: String = row
+        .try_get("reading_id")
+        .map_err(|_| to_column_parse_error("reading_id"))?;
+    let user_id: String = row
+        .try_get("user_id")
+        .map_err(|_| to_column_parse_error("user_id"))?;
+    let systolic: i32 = row
+        .try_get("systolic")
+        .map_err(|_| to_column_parse_error("systolic"))?;
+    let diastolic: i32 = row
+        .try_get("diastolic")
+        .map_err(|_| to_column_parse_error("diastolic"))?;
+    let pulse: i32 = row
+        .try_get("pulse")
+        .map_err(|_| to_column_parse_error("pulse"))?;
+    let taken_raw: String = row
+        .try_get("taken")
+        .map_err(|_| to_column_parse_error("taken"))?;
     let taken = DateTime::parse_from_rfc3339(&taken_raw)
         .map(|date| date.to_utc())
         .map_err(|_| to_column_parse_error("taken"))?;
 
-    let result: BloodPressureReadingEntity = BloodPressureReadingEntity { reading_id, user_id, systolic, diastolic, pulse, taken: taken };
-        
+    let result: BloodPressureReadingEntity = BloodPressureReadingEntity {
+        reading_id,
+        user_id,
+        systolic,
+        diastolic,
+        pulse,
+        taken: taken,
+    };
+
     Ok(result)
 }
 
@@ -89,7 +113,7 @@ impl BloodPressureReadingRepository for SqlLiteBloodPressureReadingRepository {
 
         let result: Result<
             Vec<BloodPressureReadingEntity>,
-            crate::repositories::blood_pressure_readings_repository::RetrieveError
+            crate::repositories::blood_pressure_readings_repository::RetrieveError,
         > = query_result
             .into_iter()
             .map(|row| deserialize_row(row))

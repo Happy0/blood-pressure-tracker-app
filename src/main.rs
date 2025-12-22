@@ -4,8 +4,6 @@ use std::sync::Arc;
 use axum::response::IntoResponse;
 use axum::{Json, middleware};
 use axum::{Router, routing::get, routing::post};
-use axum_macros::debug_handler;
-use chrono::{DateTime, Utc};
 use serde::Serialize;
 use tower_http::services::{ServeDir, ServeFile};
 use tower_sessions::cookie::time::Duration;
@@ -15,14 +13,11 @@ mod auth;
 mod controllers;
 mod repositories;
 
-use crate::controllers::blood_pressure_reading::{BloodPressureReadingSubmission, add_reading, get_readings};
+use crate::controllers::blood_pressure_reading::{add_reading, get_readings};
 use crate::controllers::login::{
     auth_middleware, login_handler, logout_handler, oidc_callback_handler,
 };
 use crate::controllers::ocr::run_ocr;
-use crate::repositories::blood_pressure_readings_repository::{
-    BloodPressureReadingEntity, BloodPressureReadingRepository,
-};
 use crate::repositories::sql_lite::sql_lite_blood_pressure_reading_repository::SqlLiteBloodPressureReadingRepository;
 
 #[derive(Serialize)]
@@ -48,7 +43,7 @@ async fn main() {
     let session_layer = SessionManagerLayer::new(session_store)
         // TODO: configure via environment
         .with_secure(false)
-        .with_http_only(true)
+        .with_http_only(!is_dev_mode())
         .with_same_site(tower_sessions::cookie::SameSite::Lax)
         .with_expiry(Expiry::OnInactivity(Duration::weeks(2)));
 
@@ -72,7 +67,7 @@ async fn main() {
                 move |session| login_handler(session, oidc_client)
             }),
         )
-        .route("/logout", get({ move |session| logout_handler(session) }))
+        .route("/logout", get(move |session| logout_handler(session)))
         .route(
             "/oidc-callback",
             get({
@@ -94,11 +89,14 @@ async fn main() {
                 move |session, body| add_reading(repository, session, body)
             }),
         )
-        .route("/api/reading", get({
-            let repository = Arc::clone(&blood_pressure_reading_repository);
+        .route(
+            "/api/reading",
+            get({
+                let repository = Arc::clone(&blood_pressure_reading_repository);
 
-            move|session,params| get_readings(repository, session, params)
-        }))
+                move |session, params| get_readings(repository, session, params)
+            }),
+        )
         .route_layer(middleware::from_fn(auth_middleware))
         .fallback_service(serve_dir)
         .layer(session_layer);
@@ -107,4 +105,15 @@ async fn main() {
     println!("server listen on port : {}", listener.local_addr().unwrap());
 
     axum::serve(listener, app).await.unwrap();
+}
+
+fn is_dev_mode() -> bool {
+    let setting = env::var("DEV_MODE")
+        .unwrap_or("false".to_string())
+        .to_lowercase();
+
+    match setting.as_str() {
+        "true" => true,
+        _ => false,
+    }
 }
