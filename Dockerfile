@@ -19,7 +19,7 @@ RUN cargo build --release --bin blood-pressure-tracker-app
 
 FROM lukemathwalker/cargo-chef:latest-rust-1  AS runtime
 WORKDIR /app
-RUN apt update && apt install --assume-yes libopencv-dev clang libclang-dev libopencv-imgcodecs-dev llvm-dev zip
+RUN apt update && apt install --assume-yes libopencv-dev clang libclang-dev libopencv-imgcodecs-dev llvm-dev zip sqlite3
 
 RUN cargo install sqlx-cli
 
