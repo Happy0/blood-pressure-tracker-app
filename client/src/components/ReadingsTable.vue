@@ -2,6 +2,7 @@
 import { onMounted, ref, type Ref } from 'vue';
 
     import axios from 'axios';
+    import {DateTime} from 'luxon';
 
     type Reading = {
         systolic: number,
@@ -19,18 +20,29 @@ import { onMounted, ref, type Ref } from 'vue';
 
         // TODO: error handling
         axios.get<Reading[]>(`/api/reading?from_inclusive=${dateFrom.toISOString()}&to_inclusive=${now.toISOString()}`).then(result => {
-            readings.value = result.data;
+            const rows = result.data.map(row => {
+                const date = DateTime.fromISO(row.taken);
+
+                return {
+                    ...row,
+                    date: date.toISODate(),
+                    time: date.toLocaleString(DateTime.TIME_24_SIMPLE)
+                } 
+            })
+
+            readings.value = rows;
         })
     })
 
 </script>
 
 <template>
-    <DataTable :value="readings" tableStyle="min-width: 50rem">
-        <Column field="systolic" header="Systolic"></Column>
-        <Column field="diastolic" header="Diastolic"></Column>
+    <DataTable :value="readings">
+        <Column field="systolic" header="Sys"></Column>
+        <Column field="diastolic" header="Dia"></Column>
         <Column field="pulse" header="Pulse"></Column>
-        <Column field="taken" header="Taken"></Column>
+        <Column field="date" header="Date"></Column>
+        <Column field="time" header="Time"></Column>
     </DataTable>
 </template>
 
