@@ -55,7 +55,7 @@ async fn main() {
         target_assets_directory
     )));
 
-    let database = Arc::new(SqlLiteBloodPressureReadingRepository::new("sqlite:test.db".to_string()).await.unwrap());
+    let blood_pressure_reading_repository = Arc::new(SqlLiteBloodPressureReadingRepository::new("sqlite:test.db".to_string()).await.unwrap());
     
     let app = Router::new()
         .route("/api/run-ocr", post(run_ocr))
@@ -81,10 +81,10 @@ async fn main() {
             get(async |session: Session| Json(UserInfo {}).into_response()),
         )
         .route("/api/reading", post({
-            let db = Arc::clone(&database);
+            let repository = Arc::clone(&blood_pressure_reading_repository);
 
             move |session, body| {
-                add_reading(db, session, body)
+                add_reading(repository, session, body)
             }
 
         }))
