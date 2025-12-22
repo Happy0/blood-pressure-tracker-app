@@ -1,3 +1,4 @@
 fly.toml
 client/node_modules
 .git/
+target/debug
