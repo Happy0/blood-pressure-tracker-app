@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
 
-DATABASE_URL="sqlite:///data/bp_database.db" sqlx database create
-DATABASE_URL="sqlite:///data/bp_database.db" sqlx migrate run
+sqlite3 /data/bp_database.db "VACUUM;"
 
 export BP_APP_DB_PATH="sqlite:///data/bp_database.db"
 

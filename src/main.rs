@@ -33,6 +33,8 @@ async fn main() {
 
     let database_path = get_db_path();
     let sql_lite_pool = SqlitePool::connect(&database_path).await.unwrap();
+    sqlx::migrate!("src/repositories/sql_lite/migrations").run(&sql_lite_pool).await.unwrap();
+
     let session_store = SqliteStore::new(sql_lite_pool.clone());
     session_store.migrate().await.unwrap();
 
