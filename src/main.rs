@@ -49,11 +49,9 @@ async fn main() {
         .unwrap();
     let shared_oidc_client = Arc::new(oidc_client);
 
-    // TODO: persist to a database
     let session_layer = SessionManagerLayer::new(session_store)
-        // TODO: configure via environment
-        .with_secure(false)
-        .with_http_only(!is_dev_mode())
+        .with_secure(!is_dev_mode())
+        .with_http_only(true)
         .with_same_site(tower_sessions::cookie::SameSite::Lax)
         .with_expiry(Expiry::OnInactivity(Duration::weeks(2)));
 
@@ -87,7 +85,7 @@ async fn main() {
         )
         .route(
             "/api/user-info",
-            get(async |session: Session| Json(UserInfo {}).into_response()),
+            get(async |_: Session| Json(UserInfo {}).into_response()),
         )
         .route(
             "/api/reading",
