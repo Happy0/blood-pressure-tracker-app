@@ -19,6 +19,10 @@ use crate::controllers::login::{
 };
 use crate::controllers::ocr::run_ocr;
 use crate::repositories::sql_lite::sql_lite_blood_pressure_reading_repository::SqlLiteBloodPressureReadingRepository;
+use tower_sessions_sqlx_store::SqliteStore;
+use sqlx::{
+    sqlite::{SqlitePool},
+};
 
 #[derive(Serialize)]
 struct UserInfo {}
@@ -26,6 +30,11 @@ struct UserInfo {}
 #[tokio::main]
 async fn main() {
     let target_assets_directory = env::var("CLIENT_ASSETS_PATH").unwrap_or("client".to_string());
+
+    let database_path = get_db_path();
+    let sql_lite_pool = SqlitePool::connect(&database_path).await.unwrap();
+    let session_store = SqliteStore::new(sql_lite_pool.clone());
+    session_store.migrate().await.unwrap();
 
     let shared_http_client = reqwest::Client::builder()
         .redirect(reqwest::redirect::Policy::none())
@@ -39,7 +48,6 @@ async fn main() {
     let shared_oidc_client = Arc::new(oidc_client);
 
     // TODO: persist to a database
-    let session_store = MemoryStore::default();
     let session_layer = SessionManagerLayer::new(session_store)
         // TODO: configure via environment
         .with_secure(false)
@@ -53,9 +61,7 @@ async fn main() {
     )));
 
     let blood_pressure_reading_repository = Arc::new(
-        SqlLiteBloodPressureReadingRepository::new_from_env()
-            .await
-            .unwrap(),
+        SqlLiteBloodPressureReadingRepository::from_pool(sql_lite_pool)
     );
 
     let app = Router::new()
@@ -116,4 +122,8 @@ fn is_dev_mode() -> bool {
         "true" => true,
         _ => false,
     }
+}
+
+fn get_db_path() -> String {
+    env::var("BP_APP_DB_PATH").unwrap_or("sqlite:test.db".to_string())
 }

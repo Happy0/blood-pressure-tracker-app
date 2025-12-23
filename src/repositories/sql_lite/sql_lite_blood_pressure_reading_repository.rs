@@ -16,20 +16,13 @@ pub struct SqlLiteBloodPressureReadingRepository {
 impl SqlLiteBloodPressureReadingRepository {
     pub async fn new(file_path: String) -> Result<SqlLiteBloodPressureReadingRepository, Error> {
         let pool = SqlitePool::connect(&file_path).await?;
+        return Ok(Self::from_pool(pool))
+    }
 
-        return Ok(SqlLiteBloodPressureReadingRepository {
+    pub fn from_pool(pool: SqlitePool) -> SqlLiteBloodPressureReadingRepository {
+        return SqlLiteBloodPressureReadingRepository {
             connection_pool: pool,
-        });
-    }
-
-    fn get_db_path() -> String {
-        env::var("BP_APP_DB_PATH").unwrap_or("sqlite:test.db".to_string())
-    }
-
-    pub async fn new_from_env() -> Result<SqlLiteBloodPressureReadingRepository, Error> {
-        let path = Self::get_db_path();
-
-        Self::new(path).await
+        };
     }
 }
 
