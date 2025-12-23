@@ -19,7 +19,7 @@ RUN cargo build --release --bin blood-pressure-tracker-app
 # We do not need the Rust toolchain to run the binary!
 FROM debian:trixie AS runtime
 WORKDIR /app
-RUN apt update && apt install --assume-yes libopencv-dev clang libclang-dev libopencv-imgcodecs-dev llvm-dev zip sqlite3
+RUN apt update && apt install --assume-yes libopencv-dev libopencv-imgcodecs-dev zip sqlite3
 
 ENV LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/usr/lib:/lib:/lib/x86_64-linux-gnu
 
