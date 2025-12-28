@@ -8,10 +8,20 @@ import { onMounted, ref, type Ref } from 'vue';
         systolic: number,
         diastolic: number,
         pulse: number,
-        taken: string
+        taken: string,
+        weight_kilograms: number | null
     }
 
-    const readings: Ref<Reading[]> = ref([])
+    type ReadingTableRow = {
+        systolic: number,
+        diastolic: number,
+        pulse: number,
+        date: string | null,
+        time: string,
+        weight_kilograms: number | null
+    }
+
+    const readings: Ref<ReadingTableRow[]> = ref([])
 
     onMounted(() => {
         const now = new Date(Date.now());
@@ -24,7 +34,10 @@ import { onMounted, ref, type Ref } from 'vue';
                 const date = DateTime.fromISO(row.taken);
 
                 return {
-                    ...row,
+                    systolic: row.systolic,
+                    diastolic: row.diastolic,
+                    pulse: row.pulse,
+                    weight_kilograms: row.weight_kilograms,
                     date: date.toISODate(),
                     time: date.toLocaleString(DateTime.TIME_24_SIMPLE)
                 } 
@@ -37,13 +50,43 @@ import { onMounted, ref, type Ref } from 'vue';
 </script>
 
 <template>
-    <DataTable :value="readings">
-        <Column field="systolic" header="Sys"></Column>
-        <Column field="diastolic" header="Dia"></Column>
-        <Column field="pulse" header="Pulse"></Column>
-        <Column field="date" header="Date"></Column>
-        <Column field="time" header="Time"></Column>
-    </DataTable>
+    <div>
+        <table class="table-auto">
+            <tr>
+                <th scope="row">Reading</th>
+                <th>Weight</th>
+                <th>Date</th>
+                <th>Time</th>
+            </tr>
+            <tr v-for="row in readings">
+                <td>
+                    <table>
+                        <tr>
+                            <th scope="row">Sys</th>
+                            <td>{{ row.systolic }}</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">Dia</th>
+                            <td>{{row.diastolic}}</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">Pulse</th>
+                            <td>{{ row.pulse }}</td>
+                        </tr>
+                    </table>
+                </td>
+                <td>
+                    {{ row.weight_kilograms }}
+                </td>
+                <td>
+                    {{ row.date }}
+                </td>
+                <td>
+                    {{ row.time }}
+                </td>
+            </tr>
+        </table>
+    </div>
 </template>
 
 <style>
