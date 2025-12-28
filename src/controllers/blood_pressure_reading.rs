@@ -22,6 +22,7 @@ pub struct BloodPressureReadingSubmission {
     pub systolic: i32,
     pub diastolic: i32,
     pub pulse: i32,
+    pub weight_kilograms: Option<f64>,
     pub taken: DateTime<Utc>,
 }
 
@@ -60,6 +61,7 @@ async fn add_reading_to_database<T: BloodPressureReadingRepository>(
         systolic: reading.systolic,
         diastolic: reading.diastolic,
         pulse: reading.pulse,
+        weight_kilograms: reading.weight_kilograms,
         taken: reading.taken,
     };
 

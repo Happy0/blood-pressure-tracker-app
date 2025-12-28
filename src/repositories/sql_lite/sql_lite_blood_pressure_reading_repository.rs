@@ -1,5 +1,3 @@
-use std::env;
-
 use crate::repositories::blood_pressure_readings_repository::{
     BloodPressureReadingEntity, BloodPressureReadingRepository, RetrieveError, SaveError,
 };
@@ -53,9 +51,13 @@ fn deserialize_row(
     let pulse: i32 = row
         .try_get("pulse")
         .map_err(|_| to_column_parse_error("pulse"))?;
+
+    let weight_kilograms: Option<f64> = row.try_get("weight_kilograms").map_err(|_| to_column_parse_error("weight_kilograms"))?;
+
     let taken_raw: String = row
         .try_get("taken")
         .map_err(|_| to_column_parse_error("taken"))?;
+
     let taken = DateTime::parse_from_rfc3339(&taken_raw)
         .map(|date| date.to_utc())
         .map_err(|_| to_column_parse_error("taken"))?;
@@ -66,6 +68,7 @@ fn deserialize_row(
         systolic,
         diastolic,
         pulse,
+        weight_kilograms,
         taken: taken,
     };
 
@@ -78,13 +81,14 @@ impl BloodPressureReadingRepository for SqlLiteBloodPressureReadingRepository {
         entity: crate::repositories::blood_pressure_readings_repository::BloodPressureReadingEntity,
     ) -> Result<(), crate::repositories::blood_pressure_readings_repository::SaveError> {
         let result = sqlx::query(
-            "INSERT into reading (reading_id, user_id, systolic, diastolic, pulse, taken) VALUES(?,?,?,?,?,?)"
+            "INSERT into reading (reading_id, user_id, systolic, diastolic, pulse, weight_kilograms, taken) VALUES(?,?,?,?,?,?,?)"
         )
             .bind(entity.reading_id)
             .bind(entity.user_id)
             .bind(entity.systolic)
             .bind(entity.diastolic)
             .bind(entity.pulse)
+            .bind(entity.weight_kilograms)
             .bind(entity.taken.to_rfc3339())
             .execute(&self.connection_pool).await;
 

@@ -10,6 +10,7 @@ import DatePicker from 'primevue/datepicker';
 
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
+import Select from 'primevue/select';
 
 const app = createApp(App)
 
@@ -27,5 +28,6 @@ app.component('Form', Form)
 app.component('DatePicker', DatePicker)
 app.component('DataTable', DataTable)
 app.component('Column', Column)
+app.component('Select', Select)
 
 app.mount('#app')

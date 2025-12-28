@@ -6,6 +6,7 @@ pub struct BloodPressureReadingEntity {
     pub systolic: i32,
     pub diastolic: i32,
     pub pulse: i32,
+    pub weight_kilograms: Option<f64>,
     pub taken: DateTime<Utc>,
 }
 
