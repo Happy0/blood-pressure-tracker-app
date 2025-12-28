@@ -50,43 +50,85 @@ import { onMounted, ref, type Ref } from 'vue';
 </script>
 
 <template>
-    <div>
-        <table class="table-auto">
-            <tr>
-                <th scope="row">Reading</th>
-                <th>Weight</th>
-                <th>Date</th>
-                <th>Time</th>
-            </tr>
-            <tr v-for="row in readings">
-                <td>
-                    <table>
-                        <tr>
-                            <th scope="row">Sys</th>
-                            <td>{{ row.systolic }}</td>
-                        </tr>
-                        <tr>
-                            <th scope="row">Dia</th>
-                            <td>{{row.diastolic}}</td>
-                        </tr>
-                        <tr>
-                            <th scope="row">Pulse</th>
-                            <td>{{ row.pulse }}</td>
-                        </tr>
-                    </table>
-                </td>
-                <td>
-                    {{ row.weight_kilograms }}
-                </td>
-                <td>
-                    {{ row.date }}
-                </td>
-                <td>
-                    {{ row.time }}
-                </td>
-            </tr>
-        </table>
-    </div>
+  <div class="overflow-x-auto">
+    <table class="min-w-full border border-gray-300 rounded-lg border-collapse text-sm">
+      <thead class="bg-gray-100">
+        <tr>
+          <th scope="col" class="px-4 py-2 text-left font-semibold border border-gray-300">
+            Reading
+          </th>
+          <th scope="col" class="px-4 py-2 text-left font-semibold border border-gray-300">
+            Weight
+          </th>
+          <th scope="col" class="px-4 py-2 text-left font-semibold border border-gray-300">
+            Date
+          </th>
+          <th scope="col" class="px-4 py-2 text-left font-semibold border border-gray-300">
+            Time
+          </th>
+        </tr>
+      </thead>
+
+      <tbody>
+        <tr
+          v-for="(row, index) in readings"
+          :key="index"
+          class="odd:bg-white even:bg-gray-50"
+        >
+          <td class="p-2 border border-gray-300 align-top">
+            <!-- Child table -->
+            <table class="w-full border border-gray-200 text-xs">
+              <tbody>
+                <tr>
+                  <th
+                    scope="row"
+                    class="px-2 py-1 text-left font-medium bg-gray-50 border border-gray-200"
+                  >
+                    Sys
+                  </th>
+                  <td class="px-2 py-1 border border-gray-200 text-right">
+                    {{ row.systolic }}
+                  </td>
+                </tr>
+                <tr>
+                  <th
+                    scope="row"
+                    class="px-2 py-1 text-left font-medium bg-gray-50 border border-gray-200"
+                  >
+                    Dia
+                  </th>
+                  <td class="px-2 py-1 border border-gray-200 text-right">
+                    {{ row.diastolic }}
+                  </td>
+                </tr>
+                <tr>
+                  <th
+                    scope="row"
+                    class="px-2 py-1 text-left font-medium bg-gray-50 border border-gray-200"
+                  >
+                    Pulse
+                  </th>
+                  <td class="px-2 py-1 border border-gray-200 text-right">
+                    {{ row.pulse }}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </td>
+
+          <td class="px-4 py-2 border border-gray-300">
+            {{ row.weight_kilograms }}
+          </td>
+          <td class="px-4 py-2 border border-gray-300">
+            {{ row.date }}
+          </td>
+          <td class="px-4 py-2 border border-gray-300">
+            {{ row.time }}
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
 </template>
 
 <style>
