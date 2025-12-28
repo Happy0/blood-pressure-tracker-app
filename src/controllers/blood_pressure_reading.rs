@@ -31,6 +31,7 @@ pub struct BloodPressureReadingResponse {
     pub systolic: i32,
     pub diastolic: i32,
     pub pulse: i32,
+    pub weight_kilograms: Option<f64>,
     pub taken: DateTime<Utc>,
     pub id: String,
 }
@@ -92,6 +93,7 @@ fn to_api_representation(entity: BloodPressureReadingEntity) -> BloodPressureRea
         diastolic: entity.diastolic,
         pulse: entity.pulse,
         taken: entity.taken,
+        weight_kilograms: entity.weight_kilograms,
         id: entity.reading_id,
     }
 }
