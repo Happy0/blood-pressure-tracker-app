@@ -50,21 +50,24 @@ import { onMounted, ref, type Ref } from 'vue';
 </script>
 
 <template>
-  <div class="overflow-x-auto">
+  <div class="overflow-x-auto m-2">
     <table class="min-w-full border border-gray-300 rounded-lg border-collapse text-sm">
       <thead class="bg-gray-100">
         <tr>
           <th scope="col" class="px-4 py-2 text-left font-semibold border border-gray-300">
-            Reading
+            Sys
+          </th>
+          <th scope="col" class="px-4 py-2 text-left font-semibold border border-gray-300">
+            Dia
+          </th>
+          <th scope="col" class="px-4 py-2 text-left font-semibold border border-gray-300">
+            Pulse
           </th>
           <th scope="col" class="px-4 py-2 text-left font-semibold border border-gray-300">
             Weight
           </th>
           <th scope="col" class="px-4 py-2 text-left font-semibold border border-gray-300">
-            Date
-          </th>
-          <th scope="col" class="px-4 py-2 text-left font-semibold border border-gray-300">
-            Time
+            Taken
           </th>
         </tr>
       </thead>
@@ -75,56 +78,26 @@ import { onMounted, ref, type Ref } from 'vue';
           :key="index"
           class="odd:bg-white even:bg-gray-50"
         >
-          <td class="p-2 border border-gray-300 align-top">
-            <!-- Child table -->
-            <table class="w-full border border-gray-200 text-xs">
-              <tbody>
-                <tr>
-                  <th
-                    scope="row"
-                    class="px-2 py-1 text-left font-medium bg-gray-50 border border-gray-200"
-                  >
-                    Sys
-                  </th>
-                  <td class="px-2 py-1 border border-gray-200 text-right">
-                    {{ row.systolic }}
-                  </td>
-                </tr>
-                <tr>
-                  <th
-                    scope="row"
-                    class="px-2 py-1 text-left font-medium bg-gray-50 border border-gray-200"
-                  >
-                    Dia
-                  </th>
-                  <td class="px-2 py-1 border border-gray-200 text-right">
-                    {{ row.diastolic }}
-                  </td>
-                </tr>
-                <tr>
-                  <th
-                    scope="row"
-                    class="px-2 py-1 text-left font-medium bg-gray-50 border border-gray-200"
-                  >
-                    Pulse
-                  </th>
-                  <td class="px-2 py-1 border border-gray-200 text-right">
-                    {{ row.pulse }}
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+          <td class="px-4 py-2 border border-gray-300">
+            {{ row.systolic }}
           </td>
-
+          <td class="px-4 py-2 border border-gray-300">
+            {{ row.diastolic }}
+          </td>
+          <td class="px-4 py-2 border border-gray-300">
+            {{ row.pulse }}
+          </td>
           <td class="px-4 py-2 border border-gray-300">
             {{ row.weight_kilograms }}
           </td>
-          <td class="px-4 py-2 border border-gray-300">
-            {{ row.date }}
+                    
+          <td class="p-2 border border-gray-300 align-top text-xs">
+            <!-- Child table -->
+            <div>{{ row.date }}</div>
+            <div> {{ row.time }}</div>
+            
           </td>
-          <td class="px-4 py-2 border border-gray-300">
-            {{ row.time }}
-          </td>
+
         </tr>
       </tbody>
     </table>

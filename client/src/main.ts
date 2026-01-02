@@ -8,7 +8,6 @@ import { Form } from '@primevue/forms';
 import {InputText} from 'primevue'
 import DatePicker from 'primevue/datepicker';
 
-import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import Select from 'primevue/select';
 
@@ -26,7 +25,6 @@ app.component('Button', Button)
 app.component('InputText', InputText)
 app.component('Form', Form)
 app.component('DatePicker', DatePicker)
-app.component('DataTable', DataTable)
 app.component('Column', Column)
 app.component('Select', Select)
 
