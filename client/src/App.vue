@@ -61,11 +61,11 @@ const navigationItems = ref(loggedInItems);
 </script>
 
 <template>
-    <div class="flex p-4">
+    <div class="flex m-2">
       <div class="max-w-sm mx-auto">
-        <div class="bg-white rounded-2xl shadow p-3 border">
+        <div class="bg-white rounded-2xl shadow border">
 
-          <div class="m-2">
+          <div>
             <div class="flex flex-row">
               <div v-for="item in navigationItems">
                 <div class="rounded-xl shadow p-2 m-2 justify-center">
@@ -78,7 +78,7 @@ const navigationItems = ref(loggedInItems);
 
             </div>
         </div>
-        <main class="h-full">
+        <main>
           <RouterView></RouterView>
         </main>
         </div>
