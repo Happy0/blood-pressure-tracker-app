@@ -12,10 +12,6 @@ pub struct SqlLiteBloodPressureReadingRepository {
 }
 
 impl SqlLiteBloodPressureReadingRepository {
-    pub async fn new(file_path: String) -> Result<SqlLiteBloodPressureReadingRepository, Error> {
-        let pool = SqlitePool::connect(&file_path).await?;
-        return Ok(Self::from_pool(pool))
-    }
 
     pub fn from_pool(pool: SqlitePool) -> SqlLiteBloodPressureReadingRepository {
         return SqlLiteBloodPressureReadingRepository {

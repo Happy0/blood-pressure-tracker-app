@@ -1,50 +1,85 @@
 <script setup lang="ts">
   import './assets/main.css'
   import 'primeicons/primeicons.css'
-  import { useRoute } from 'vue-router';
-  import LoginLogoutButton from './components/LoginLogoutButton.vue';
+  import { onMounted, ref } from 'vue';
 
-  const route = useRoute()
+  let loggedIn = ref(false);
 
-  const items = [{
-    label: "Take Reading",
+  onMounted(async () => {
+    try {
+      const res = await fetch('/api/user-info', {
+        credentials: 'include'
+      })
+
+      if (res.ok) {
+        navigationItems.value = loggedInItems;
+      } else if (res.status === 401) {
+        navigationItems.value = loggedOutItems;
+      } 
+    } catch (err) {
+      console.error('Auth check failed', err)
+      loggedIn.value = false
+    }
+})
+
+  const loggedOutItems = [{
+    label: "Take",
     route: "/",
-    icon:"📝 "
+    icon:"📝",
   },
-{
-  label: "View Readings",
-  route: "/view-readings",
-  icon: "📖"
-}]
+  {
+    label: "View",
+    route: "/view-readings",
+    icon: "📖",
+  },
+  {
+    label: "Login",
+    route: "/login",
+    icon: "➜]",
+  }
+]
+
+const loggedInItems = [{
+    label: "Take",
+    route: "/",
+    icon:"📝",
+  },
+  {
+    label: "View",
+    route: "/view-readings",
+    icon: "📖",
+  },
+  {
+    label: "Logout",
+    route: "/logout",
+    icon: "➜🚪",
+  }
+]
+
+const navigationItems = ref(loggedInItems);
 
 </script>
 
 <template>
-    <div class="min-h-screen flex items-center justify-center p-4 bg-gray-50">
+    <div class="flex p-4">
       <div class="max-w-sm mx-auto">
         <div class="bg-white rounded-2xl shadow p-3 border">
 
-<Tabs value="/">
-    <TabList class="flex flex-row mx-auto">
-      <span>&nbsp;|&nbsp;</span>
-        <Tab v-for="tab in items" :key="tab.label" :value="tab.route">
-            <router-link v-if="tab.route" v-slot="{ href, navigate }" :to="tab.route" >
-                <a v-ripple :href="href" @click="navigate" class="flex items-center gap-2 text-inherit">
-                    <span>{{ tab.icon }}</span>
-                    <span>{{ tab.label }}</span>
-                    <span> &nbsp;| &nbsp;</span>
-                </a>
-            </router-link>
-        </Tab>
-    </TabList>
-    </Tabs>
-    <hr class="m-2"></hr>
-        <main>
+          <div class="m-2">
+            <div class="flex flex-row">
+              <div v-for="item in navigationItems">
+                <div class="rounded-xl shadow p-2 m-2 justify-center">
+                  <a :href="item.route">
+                    <div class="font-medium">{{ item.label }}</div>
+                    <div class="text-center">{{ item.icon }}</div>
+                  </a>
+                  </div>
+              </div>
+
+            </div>
+        </div>
+        <main class="h-full">
           <RouterView></RouterView>
-          <div class="max-w-sm mx-auto">
-            <LoginLogoutButton></LoginLogoutButton>
-          </div>
-          
         </main>
         </div>
       </div>
