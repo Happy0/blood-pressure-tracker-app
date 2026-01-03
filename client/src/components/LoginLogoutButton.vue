@@ -1,12 +1,12 @@
 <template>
   <button
-    class="text-center py-3 rounded-xl border bg-blue-500 text-white font-medium hover:bg-blue-600 transition"
+    class="text-center py-3 block m-2 mx-auto rounded-xl border bg-blue-500 text-white font-medium hover:bg-blue-600 transition"
     @click="handleClick"
     :disabled="status === 'loading'"
   >
-    <span v-if="status === 'loading'">...</span>
-    <span v-else-if="status === 'authenticated'">Logout</span>
-    <span v-else>Login</span>
+    <div v-if="status === 'loading'"></div>
+    <div v-else-if="status === 'authenticated'">Logout</div>
+    <div v-else>Login</div>
   </button>
 </template>
 

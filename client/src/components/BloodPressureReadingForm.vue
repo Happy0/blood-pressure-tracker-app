@@ -51,9 +51,7 @@ import { useRouter } from 'vue-router';
 </script>
 
 <template>
-      <div class="min-h-screen flex items-center justify-center p-4 bg-gray-50">
-      <div class="max-w-sm mx-auto">
-    <div class="bg-white rounded-2xl shadow p-6 border">
+
     <Form v-slot="$form" :initial-values="initial" @submit="onSubmit" class="flex flex-col gap-4 w-full sm:w-56 mx-auto">
         <div class="flex flex-col gap-1">
             <label class="block mb-1 font-medium">Systolic</Label>
@@ -91,9 +89,7 @@ import { useRouter } from 'vue-router';
         </div>
 
     </Form>
-    </div>
-    </div>
-    </div>
+
 </template>
 
 <style>
