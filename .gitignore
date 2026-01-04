@@ -3,3 +3,4 @@
 run-dev.sh
 test.db*
 .env
+node_modules/

@@ -2,8 +2,27 @@
 import './assets/main.css'
 import 'primeicons/primeicons.css'
 import { onMounted, ref } from 'vue'
+import { useRouter } from 'vue-router'
 
 let loggedIn = ref(false)
+
+const router = useRouter()
+
+type NavItem = {
+  label: string
+  route: string
+  icon: string
+}
+
+function isActiveRoute(navItem: NavItem): boolean {
+  let currentRoute = router.currentRoute.value.path
+  console.log(currentRoute)
+  if (currentRoute === '/') {
+    return navItem.route === '/'
+  } else {
+    return navItem.route.startsWith(currentRoute)
+  }
+}
 
 onMounted(async () => {
   try {
@@ -22,7 +41,7 @@ onMounted(async () => {
   }
 })
 
-const loggedOutItems = [
+const navItems = [
   {
     label: 'Add',
     route: '/',
@@ -33,6 +52,10 @@ const loggedOutItems = [
     route: '/view-readings',
     icon: '📖',
   },
+]
+
+const loggedOutItems = [
+  ...navItems,
   {
     label: 'Login',
     route: '/login',
@@ -41,16 +64,7 @@ const loggedOutItems = [
 ]
 
 const loggedInItems = [
-  {
-    label: 'Take',
-    route: '/',
-    icon: '📝',
-  },
-  {
-    label: 'View',
-    route: '/view-readings',
-    icon: '📖',
-  },
+  ...navItems,
   {
     label: 'Logout',
     route: '/logout',
@@ -68,7 +82,17 @@ const navigationItems = ref(loggedInItems)
         <div>
           <div class="flex flex-row">
             <div v-for="item in navigationItems">
-              <div class="rounded-xl shadow p-2 m-2 justify-center">
+              <div
+                :class="[
+                  'rounded-xl',
+                  'shadow',
+                  'p-2',
+                  'm-2',
+                  'justify-center',
+                  'hover:bg-sky-300',
+                  { 'bg-sky-300': isActiveRoute(item) },
+                ]"
+              >
                 <a :href="item.route">
                   <div class="font-medium">{{ item.label }}</div>
                   <div class="text-center">{{ item.icon }}</div>
