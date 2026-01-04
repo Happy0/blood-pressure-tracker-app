@@ -8,14 +8,13 @@ use axum::{
 use chrono::{DateTime, Utc};
 use reqwest::StatusCode;
 use serde::{Deserialize, Serialize};
-use tower_sessions::Session;
 use uuid::Uuid;
 
 use crate::repositories::{
     blood_pressure_readings_repository::{
         BloodPressureReadingEntity, BloodPressureReadingRepository,
     },
-    session_repository::{self, SessionRepository},
+    session_repository::SessionRepository,
 };
 
 #[derive(Deserialize)]

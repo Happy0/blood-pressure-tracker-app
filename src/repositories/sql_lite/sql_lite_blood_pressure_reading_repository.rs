@@ -3,7 +3,7 @@ use crate::repositories::blood_pressure_readings_repository::{
 };
 use chrono::DateTime;
 use sqlx::{
-    Error, Row,
+    Row,
     sqlite::{SqlitePool, SqliteRow},
 };
 

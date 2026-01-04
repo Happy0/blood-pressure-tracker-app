@@ -1,5 +1,5 @@
 use std::sync::Arc;
-use std::{env, fs};
+use std::env;
 
 use axum::response::IntoResponse;
 use axum::{Json, middleware};
@@ -7,7 +7,7 @@ use axum::{Router, routing::get, routing::post};
 use serde::Serialize;
 use tower_http::services::{ServeDir, ServeFile};
 use tower_sessions::cookie::time::Duration;
-use tower_sessions::{Expiry, MemoryStore, Session, SessionManagerLayer};
+use tower_sessions::{Expiry, Session, SessionManagerLayer};
 
 mod auth;
 mod controllers;
@@ -18,7 +18,7 @@ use crate::controllers::login::{
     auth_middleware, login_handler, logout_handler, oidc_callback_handler,
 };
 use crate::controllers::ocr::run_ocr;
-use crate::repositories::session_repository::{self, SessionRepository, TowerSessionRepository};
+use crate::repositories::session_repository::TowerSessionRepository;
 use crate::repositories::sql_lite::sql_lite_blood_pressure_reading_repository::SqlLiteBloodPressureReadingRepository;
 use sqlx::sqlite::SqlitePool;
 use tower_sessions_sqlx_store::SqliteStore;

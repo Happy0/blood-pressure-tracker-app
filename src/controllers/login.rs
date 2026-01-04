@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use crate::repositories::session_repository::{self, SessionRepository};
+use crate::repositories::session_repository::SessionRepository;
 use axum::{
     extract::{Query, Request},
     middleware::Next,
@@ -8,7 +8,7 @@ use axum::{
 };
 use openidconnect::{
     AccessTokenHash, AuthenticationFlow, AuthorizationCode, CsrfToken, EndpointMaybeSet,
-    EndpointNotSet, EndpointSet, Nonce, OAuth2TokenResponse, PkceCodeChallenge, PkceCodeVerifier,
+    EndpointNotSet, EndpointSet, Nonce, OAuth2TokenResponse, PkceCodeChallenge,
     Scope, TokenResponse,
     core::{CoreClient, CoreResponseType},
     reqwest::Client,
