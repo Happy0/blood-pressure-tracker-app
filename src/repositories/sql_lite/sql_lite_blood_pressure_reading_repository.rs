@@ -12,7 +12,6 @@ pub struct SqlLiteBloodPressureReadingRepository {
 }
 
 impl SqlLiteBloodPressureReadingRepository {
-
     pub fn from_pool(pool: SqlitePool) -> SqlLiteBloodPressureReadingRepository {
         return SqlLiteBloodPressureReadingRepository {
             connection_pool: pool,
@@ -48,7 +47,9 @@ fn deserialize_row(
         .try_get("pulse")
         .map_err(|_| to_column_parse_error("pulse"))?;
 
-    let weight_kilograms: Option<f64> = row.try_get("weight_kilograms").map_err(|_| to_column_parse_error("weight_kilograms"))?;
+    let weight_kilograms: Option<f64> = row
+        .try_get("weight_kilograms")
+        .map_err(|_| to_column_parse_error("weight_kilograms"))?;
 
     let taken_raw: String = row
         .try_get("taken")
@@ -105,7 +106,6 @@ impl BloodPressureReadingRepository for SqlLiteBloodPressureReadingRepository {
         Vec<crate::repositories::blood_pressure_readings_repository::BloodPressureReadingEntity>,
         crate::repositories::blood_pressure_readings_repository::RetrieveError,
     > {
-
         let query_result =
             sqlx::query("select * from reading WHERE user_id = ? AND taken >= ? AND taken <= ? ORDER BY taken DESC")
                 .bind(user_id)

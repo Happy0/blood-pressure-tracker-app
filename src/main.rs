@@ -1,5 +1,5 @@
-use std::{env, fs};
 use std::sync::Arc;
+use std::{env, fs};
 
 use axum::response::IntoResponse;
 use axum::{Json, middleware};
@@ -18,11 +18,10 @@ use crate::controllers::login::{
     auth_middleware, login_handler, logout_handler, oidc_callback_handler,
 };
 use crate::controllers::ocr::run_ocr;
+use crate::repositories::session_repository::{self, SessionRepository, TowerSessionRepository};
 use crate::repositories::sql_lite::sql_lite_blood_pressure_reading_repository::SqlLiteBloodPressureReadingRepository;
+use sqlx::sqlite::SqlitePool;
 use tower_sessions_sqlx_store::SqliteStore;
-use sqlx::{
-    sqlite::{SqlitePool},
-};
 
 #[derive(Serialize)]
 struct UserInfo {}
@@ -33,7 +32,10 @@ async fn main() {
 
     let database_path = get_db_path();
     let sql_lite_pool = SqlitePool::connect(&database_path).await.unwrap();
-    sqlx::migrate!("src/repositories/sql_lite/migrations").run(&sql_lite_pool).await.unwrap();
+    sqlx::migrate!("src/repositories/sql_lite/migrations")
+        .run(&sql_lite_pool)
+        .await
+        .unwrap();
 
     let session_store = SqliteStore::new(sql_lite_pool.clone());
     session_store.migrate().await.unwrap();
@@ -61,7 +63,7 @@ async fn main() {
     )));
 
     let blood_pressure_reading_repository = Arc::new(
-        SqlLiteBloodPressureReadingRepository::from_pool(sql_lite_pool)
+        SqlLiteBloodPressureReadingRepository::from_pool(sql_lite_pool),
     );
 
     let app = Router::new()
@@ -70,7 +72,8 @@ async fn main() {
             "/login",
             get({
                 let oidc_client = Arc::clone(&shared_oidc_client);
-                move |session| login_handler(session, oidc_client)
+
+                move |session| login_handler(TowerSessionRepository::new(session), oidc_client)
             }),
         )
         .route("/logout", get(move |session| logout_handler(session)))
@@ -79,7 +82,12 @@ async fn main() {
             get({
                 let oidc_client = Arc::clone(&shared_oidc_client);
                 move |session, params| {
-                    oidc_callback_handler(session, oidc_client, shared_http_client, params)
+                    oidc_callback_handler(
+                        TowerSessionRepository::new(session),
+                        oidc_client,
+                        shared_http_client,
+                        params,
+                    )
                 }
             }),
         )
@@ -92,7 +100,9 @@ async fn main() {
             post({
                 let repository = Arc::clone(&blood_pressure_reading_repository);
 
-                move |session, body| add_reading(repository, session, body)
+                move |session, body| {
+                    add_reading(repository, TowerSessionRepository::new(session), body)
+                }
             }),
         )
         .route(
@@ -100,7 +110,9 @@ async fn main() {
             get({
                 let repository = Arc::clone(&blood_pressure_reading_repository);
 
-                move |session, params| get_readings(repository, session, params)
+                move |session, params| {
+                    get_readings(repository, TowerSessionRepository::new(session), params)
+                }
             }),
         )
         .route_layer(middleware::from_fn(auth_middleware))

@@ -9,6 +9,7 @@ axum = { version = "0.8.7", features = ["multipart", "query"] }
 axum-macros = "0.5.0"
 bpm-ocr = "1.0.0"
 chrono = "0.4.42"
+csv = "1.4.0"
 openidconnect = "4.0.1"
 reqwest = "0.12.26"
 serde = { version = "1.0.228", features = ["derive"] }

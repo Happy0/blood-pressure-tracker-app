@@ -1,5 +1,6 @@
 use std::sync::Arc;
 
+use crate::repositories::session_repository::{self, SessionRepository};
 use axum::{
     extract::{Query, Request},
     middleware::Next,
@@ -33,8 +34,8 @@ pub struct CallBackParameters {
     state: String,
 }
 
-pub async fn login_handler(
-    session: Session,
+pub async fn login_handler<T: SessionRepository>(
+    session_repository: T,
     client: Arc<
         CoreClient<
             EndpointSet,
@@ -60,15 +61,15 @@ pub async fn login_handler(
         .set_pkce_challenge(pkce_challenge)
         .url();
 
-    let csrf_insert = session.insert(OIDC_CSRF_TOKEN_KEY, csrf_state.secret());
-    let nonce_insert = session.insert(OIDC_NONCE_KEY, nonce);
-    let pkce_verifier_insert = session.insert(OIDC_PKCE_VERIFIER_KEY, pkce_verifier);
-    let save = session.save();
+    let csrf_insert = session_repository.save_oidc_crsf_token(csrf_state.into_secret());
 
-    let result = join!(csrf_insert, nonce_insert, pkce_verifier_insert, save);
+    let nonce_insert = session_repository.save_oidc_nonce_key(nonce);
+    let pkce_verifier_insert = session_repository.save_pkce_verifier(pkce_verifier);
+
+    let result = join!(csrf_insert, nonce_insert, pkce_verifier_insert);
 
     match result {
-        (Ok(_), Ok(_), Ok(_), Ok(_)) => Redirect::temporary(authorize_url.as_str()).into_response(),
+        (Ok(_), Ok(_), Ok(_)) => Redirect::temporary(authorize_url.as_str()).into_response(),
         _ => (
             StatusCode::INTERNAL_SERVER_ERROR,
             "Error storing auth details into session",
@@ -77,8 +78,8 @@ pub async fn login_handler(
     }
 }
 
-async fn get_user_details(
-    session: &Session,
+async fn get_user_details<T: SessionRepository>(
+    session_repository: &T,
     client: Arc<
         CoreClient<
             EndpointSet,
@@ -93,9 +94,9 @@ async fn get_user_details(
     authorization_code: AuthorizationCode,
     state: String,
 ) -> Result<OpenIdDetails, String> {
-    let csrf_token = session.get::<String>(OIDC_CSRF_TOKEN_KEY);
-    let nonce = session.get::<Nonce>(OIDC_NONCE_KEY);
-    let pkce_verifier = session.get::<PkceCodeVerifier>(OIDC_PKCE_VERIFIER_KEY);
+    let csrf_token = session_repository.get_oidc_crsf_token();
+    let nonce = session_repository.get_oidc_nonce_key();
+    let pkce_verifier = session_repository.get_pkce_verifier();
 
     let results = join!(csrf_token, nonce, pkce_verifier);
 
@@ -159,8 +160,8 @@ async fn get_user_details(
     }
 }
 
-pub async fn oidc_callback_handler(
-    session: Session,
+pub async fn oidc_callback_handler<T: SessionRepository>(
+    session: T,
     oidc_client: Arc<
         CoreClient<
             EndpointSet,
@@ -189,17 +190,11 @@ pub async fn oidc_callback_handler(
 
     match details {
         Ok(user_details) => {
-            let store_subject_result = session
-                .insert(SUBJECT_SESSION_KEY, user_details.subject)
-                .await;
+            let store_subject_result = session.save_oidc_user_subject(user_details.subject).await;
 
-            let d1 = session.remove::<String>(OIDC_CSRF_TOKEN_KEY);
-            let d2 = session.remove::<Nonce>(OIDC_NONCE_KEY);
-            let d3 = session.remove::<PkceCodeVerifier>(OIDC_PKCE_VERIFIER_KEY);
+            let clear_result = session.clear_oidc_flow_details().await;
 
-            _ = join!(d1, d2, d3);
-
-            if store_subject_result.is_err() {
+            if store_subject_result.is_err() || clear_result.is_err() {
                 return (
                     StatusCode::INTERNAL_SERVER_ERROR,
                     "Could not start session.",
@@ -209,7 +204,7 @@ pub async fn oidc_callback_handler(
 
             Redirect::temporary("/").into_response()
         }
-        Err(err_details) => (
+        Err(_) => (
             StatusCode::INTERNAL_SERVER_ERROR,
             "Authentication not successful.",
         )

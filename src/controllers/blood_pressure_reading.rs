@@ -11,11 +11,12 @@ use serde::{Deserialize, Serialize};
 use tower_sessions::Session;
 use uuid::Uuid;
 
-use crate::repositories::blood_pressure_readings_repository::{
-    BloodPressureReadingEntity, BloodPressureReadingRepository,
+use crate::repositories::{
+    blood_pressure_readings_repository::{
+        BloodPressureReadingEntity, BloodPressureReadingRepository,
+    },
+    session_repository::{self, SessionRepository},
 };
-
-const SUBJECT_SESSION_KEY: &str = "OIDC_SUBJECT_KEY";
 
 #[derive(Deserialize)]
 pub struct BloodPressureReadingSubmission {
@@ -42,13 +43,13 @@ pub struct GetReadingQueryParameters {
     pub to_inclusive: DateTime<Utc>,
 }
 
-async fn add_reading_to_database<T: BloodPressureReadingRepository>(
+async fn add_reading_to_database<T: BloodPressureReadingRepository, U: SessionRepository>(
     reading_repository: &Arc<T>,
-    session: Session,
+    session_repository: U,
     reading: BloodPressureReadingSubmission,
 ) -> Result<(), String> {
-    let subject = session
-        .get::<String>(SUBJECT_SESSION_KEY)
+    let subject = session_repository
+        .get_oidc_user_subject()
         .await
         .map_err(|_| "Could not access session")?;
 
@@ -74,12 +75,12 @@ async fn add_reading_to_database<T: BloodPressureReadingRepository>(
     Ok(())
 }
 
-pub async fn add_reading<T: BloodPressureReadingRepository>(
+pub async fn add_reading<T: BloodPressureReadingRepository, U: SessionRepository>(
     reading_repository: Arc<T>,
-    session: Session,
+    session_repository: U,
     Json(body): Json<BloodPressureReadingSubmission>,
 ) -> Response {
-    let result = add_reading_to_database(&reading_repository, session, body).await;
+    let result = add_reading_to_database(&reading_repository, session_repository, body).await;
 
     match result {
         Ok(_) => (StatusCode::OK).into_response(),
@@ -98,14 +99,14 @@ fn to_api_representation(entity: BloodPressureReadingEntity) -> BloodPressureRea
     }
 }
 
-async fn get_readings_from_database<T: BloodPressureReadingRepository>(
+async fn get_readings_from_database<T: BloodPressureReadingRepository, U: SessionRepository>(
     reading_repository: Arc<T>,
-    session: Session,
+    session_repository: U,
     from: DateTime<Utc>,
     to: DateTime<Utc>,
 ) -> Result<Vec<BloodPressureReadingResponse>, String> {
-    let subject = session
-        .get::<String>(SUBJECT_SESSION_KEY)
+    let subject = session_repository
+        .get_oidc_user_subject()
         .await
         .map_err(|_| "Could not access session")?;
 
@@ -123,16 +124,16 @@ async fn get_readings_from_database<T: BloodPressureReadingRepository>(
     Ok(result)
 }
 
-pub async fn get_readings<T: BloodPressureReadingRepository>(
+pub async fn get_readings<T: BloodPressureReadingRepository, U: SessionRepository>(
     reading_repository: Arc<T>,
-    session: Session,
+    session_repository: U,
     query: Query<GetReadingQueryParameters>,
 ) -> Response {
     // TODO: validate query parameters
 
     let result = get_readings_from_database(
         reading_repository,
-        session,
+        session_repository,
         query.from_inclusive,
         query.to_inclusive,
     )
