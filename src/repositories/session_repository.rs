@@ -49,6 +49,33 @@ impl TowerSessionRepository {
     }
 }
 
+pub struct LoggedInSessionRepository<T: SessionRepository> {
+    repository: T,
+}
+
+pub enum LoggedInSessionError {
+    MissingValue(),
+    Error(SessionRepositoryError),
+}
+
+impl<T: SessionRepository> LoggedInSessionRepository<T> {
+    pub fn new(repository: T) -> LoggedInSessionRepository<T> {
+        LoggedInSessionRepository {
+            repository: repository,
+        }
+    }
+
+    pub async fn get_oidc_user_subject(&self) -> Result<String, LoggedInSessionError> {
+        let result = self.repository.get_oidc_user_subject().await;
+
+        match result {
+            Ok(Some(user_subject)) => Ok(user_subject),
+            Ok(None) => Err(LoggedInSessionError::MissingValue()),
+            Err(err) => Err(LoggedInSessionError::Error(err)),
+        }
+    }
+}
+
 impl SessionRepository for TowerSessionRepository {
     async fn get_oidc_user_subject(&self) -> Result<Option<String>, SessionRepositoryError> {
         let test = self.session.get::<String>(SUBJECT_SESSION_KEY).await?;

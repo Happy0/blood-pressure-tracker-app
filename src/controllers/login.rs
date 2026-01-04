@@ -8,8 +8,8 @@ use axum::{
 };
 use openidconnect::{
     AccessTokenHash, AuthenticationFlow, AuthorizationCode, CsrfToken, EndpointMaybeSet,
-    EndpointNotSet, EndpointSet, Nonce, OAuth2TokenResponse, PkceCodeChallenge,
-    Scope, TokenResponse,
+    EndpointNotSet, EndpointSet, Nonce, OAuth2TokenResponse, PkceCodeChallenge, Scope,
+    TokenResponse,
     core::{CoreClient, CoreResponseType},
     reqwest::Client,
 };

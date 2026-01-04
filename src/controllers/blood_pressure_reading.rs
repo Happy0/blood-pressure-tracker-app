@@ -14,7 +14,7 @@ use crate::repositories::{
     blood_pressure_readings_repository::{
         BloodPressureReadingEntity, BloodPressureReadingRepository,
     },
-    session_repository::SessionRepository,
+    session_repository::{LoggedInSessionRepository, SessionRepository},
 };
 
 #[derive(Deserialize)]
@@ -44,15 +44,13 @@ pub struct GetReadingQueryParameters {
 
 async fn add_reading_to_database<T: BloodPressureReadingRepository, U: SessionRepository>(
     reading_repository: &Arc<T>,
-    session_repository: U,
+    session_repository: LoggedInSessionRepository<U>,
     reading: BloodPressureReadingSubmission,
 ) -> Result<(), String> {
-    let subject = session_repository
+    let user_id = session_repository
         .get_oidc_user_subject()
         .await
-        .map_err(|_| "Could not access session")?;
-
-    let user_id = subject.ok_or("Missing user ID in session")?;
+        .map_err(|_| "Could not access user ID from")?;
 
     let blood_pressure_reading_id = Uuid::now_v7().to_string();
 
@@ -76,7 +74,7 @@ async fn add_reading_to_database<T: BloodPressureReadingRepository, U: SessionRe
 
 pub async fn add_reading<T: BloodPressureReadingRepository, U: SessionRepository>(
     reading_repository: Arc<T>,
-    session_repository: U,
+    session_repository: LoggedInSessionRepository<U>,
     Json(body): Json<BloodPressureReadingSubmission>,
 ) -> Response {
     let result = add_reading_to_database(&reading_repository, session_repository, body).await;
@@ -100,16 +98,15 @@ fn to_api_representation(entity: BloodPressureReadingEntity) -> BloodPressureRea
 
 async fn get_readings_from_database<T: BloodPressureReadingRepository, U: SessionRepository>(
     reading_repository: Arc<T>,
-    session_repository: U,
+    session_repository: LoggedInSessionRepository<U>,
     from: DateTime<Utc>,
     to: DateTime<Utc>,
 ) -> Result<Vec<BloodPressureReadingResponse>, String> {
-    let subject = session_repository
+    let user_id = session_repository
         .get_oidc_user_subject()
         .await
-        .map_err(|_| "Could not access session")?;
+        .map_err(|_| "Could not access user ID from session")?;
 
-    let user_id = subject.ok_or("Missing user ID in session")?;
     let db_result = reading_repository
         .list(user_id, from, to)
         .await
@@ -125,7 +122,7 @@ async fn get_readings_from_database<T: BloodPressureReadingRepository, U: Sessio
 
 pub async fn get_readings<T: BloodPressureReadingRepository, U: SessionRepository>(
     reading_repository: Arc<T>,
-    session_repository: U,
+    session_repository: LoggedInSessionRepository<U>,
     query: Query<GetReadingQueryParameters>,
 ) -> Response {
     // TODO: validate query parameters

@@ -1,5 +1,5 @@
-use std::sync::Arc;
 use std::env;
+use std::sync::Arc;
 
 use axum::response::IntoResponse;
 use axum::{Json, middleware};
@@ -18,7 +18,7 @@ use crate::controllers::login::{
     auth_middleware, login_handler, logout_handler, oidc_callback_handler,
 };
 use crate::controllers::ocr::run_ocr;
-use crate::repositories::session_repository::TowerSessionRepository;
+use crate::repositories::session_repository::{LoggedInSessionRepository, TowerSessionRepository};
 use crate::repositories::sql_lite::sql_lite_blood_pressure_reading_repository::SqlLiteBloodPressureReadingRepository;
 use sqlx::sqlite::SqlitePool;
 use tower_sessions_sqlx_store::SqliteStore;
@@ -101,7 +101,11 @@ async fn main() {
                 let repository = Arc::clone(&blood_pressure_reading_repository);
 
                 move |session, body| {
-                    add_reading(repository, TowerSessionRepository::new(session), body)
+                    add_reading(
+                        repository,
+                        LoggedInSessionRepository::new(TowerSessionRepository::new(session)),
+                        body,
+                    )
                 }
             }),
         )
@@ -111,7 +115,11 @@ async fn main() {
                 let repository = Arc::clone(&blood_pressure_reading_repository);
 
                 move |session, params| {
-                    get_readings(repository, TowerSessionRepository::new(session), params)
+                    get_readings(
+                        repository,
+                        LoggedInSessionRepository::new(TowerSessionRepository::new(session)),
+                        params,
+                    )
                 }
             }),
         )
