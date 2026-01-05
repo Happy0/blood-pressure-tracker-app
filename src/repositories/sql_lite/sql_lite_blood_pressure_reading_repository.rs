@@ -127,4 +127,21 @@ impl BloodPressureReadingRepository for SqlLiteBloodPressureReadingRepository {
 
         return result;
     }
+
+    async fn get_latest_weight(&self, user_id: String) -> Result<Option<f64>, RetrieveError> {
+        let query = "select weight_kilograms from reading WHERE user_id = ? weight_kilograms IS NOT NULL ORDER BY taken DESC LIMIT 1";
+        let query_result = sqlx::query(query)
+            .bind(user_id)
+            .fetch_optional(&self.connection_pool)
+            .await
+            .map_err(|error| RetrieveError::LowLevelError {
+                description: error.to_string(),
+            })?;
+
+        let result: Option<f64> = query_result
+            .map(|row: SqliteRow| row.try_get("weight_kilograms").ok())
+            .flatten();
+
+        Ok(result)
+    }
 }

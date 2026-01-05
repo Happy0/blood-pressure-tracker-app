@@ -33,4 +33,9 @@ pub trait BloodPressureReadingRepository {
         from: DateTime<Utc>,
         to: DateTime<Utc>,
     ) -> Result<Vec<BloodPressureReadingEntity>, RetrieveError>;
+
+    /**
+     * Retrieves the latest weight reading supplied by the user if it exists
+     */
+    async fn get_latest_weight(&self, user_id: String) -> Result<Option<f64>, RetrieveError>;
 }

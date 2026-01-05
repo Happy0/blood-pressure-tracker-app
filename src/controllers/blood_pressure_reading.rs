@@ -36,6 +36,7 @@ pub struct BloodPressureReadingResponse {
     pub id: String,
 }
 
+
 #[derive(Deserialize)]
 pub struct GetReadingQueryParameters {
     pub from_inclusive: DateTime<Utc>,

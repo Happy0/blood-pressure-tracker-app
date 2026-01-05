@@ -18,6 +18,7 @@ use crate::controllers::login::{
     auth_middleware, login_handler, logout_handler, oidc_callback_handler,
 };
 use crate::controllers::ocr::run_ocr;
+use crate::controllers::weight::get_latest_weight;
 use crate::repositories::session_repository::{LoggedInSessionRepository, TowerSessionRepository};
 use crate::repositories::sql_lite::sql_lite_blood_pressure_reading_repository::SqlLiteBloodPressureReadingRepository;
 use sqlx::sqlite::SqlitePool;
@@ -122,6 +123,18 @@ async fn main() {
                     )
                 }
             }),
+        )
+        .route(
+            "/api/weight",
+            get({
+                let repository = Arc::clone(&blood_pressure_reading_repository);
+                move |session| {
+                    get_latest_weight(
+                        repository,
+                        LoggedInSessionRepository::new(TowerSessionRepository::new(session))
+                    )
+                }
+            })
         )
         .route_layer(middleware::from_fn(auth_middleware))
         .fallback_service(serve_dir)
