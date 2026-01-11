@@ -1,7 +1,7 @@
 import ReadingFromCamera from '@/components/ReadingFromCamera.vue'
 import BloodPressureReadingForm from '../components/BloodPressureReadingForm.vue'
 import { createRouter, createWebHistory } from 'vue-router'
-import ReadingsTable from '@/components/ReadingsTable.vue'
+import ReadingsView from '@/components/view-readings/ReadingsView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -13,7 +13,7 @@ const router = createRouter({
       props: true,
     },
     { path: '/reading-from-camera', component: ReadingFromCamera },
-    { path: '/view-readings', component: ReadingsTable },
+    { path: '/view-readings', component: ReadingsView },
   ],
 })
 

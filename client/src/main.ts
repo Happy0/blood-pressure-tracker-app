@@ -7,10 +7,12 @@ import Button from 'primevue/button'
 import { Form } from '@primevue/forms'
 import { InputText } from 'primevue'
 import DatePicker from 'primevue/datepicker'
+import Dialog from 'primevue/dialog';
 
 import Column from 'primevue/column'
 import Select from 'primevue/select'
 import Tabs from 'primevue/tabs'
+import SplitButton from 'primevue/splitbutton';
 
 const app = createApp(App)
 
@@ -34,5 +36,7 @@ app.component('DatePicker', DatePicker)
 app.component('Column', Column)
 app.component('Select', Select)
 app.component('Tabs', Tabs)
+app.component('Dialog', Dialog)
+app.component('SplitButton', SplitButton)
 
 app.mount('#app')
